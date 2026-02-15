@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'routes/app_routes.dart';
+import 'screens/login.dart';
 import 'screens/signup.dart';
 
 void main() {
@@ -13,10 +15,16 @@ class KasRratApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'KasRrat',
-      theme: ThemeData.dark().copyWith(
-        primaryColor: Colors.cyanAccent,
-      ),
-      home: const SignUpScreen(),
+      theme: ThemeData.dark(),
+  
+      // show the login screen first
+      initialRoute: AppRoutes.login, 
+      
+      // navigtaion routes of the application
+      routes: {
+        AppRoutes.signup: (context) => const SignUpScreen(),
+        AppRoutes.login: (context) => const LoginScreen(),
+      },
     );
   }
 }

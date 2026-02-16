@@ -17,7 +17,7 @@ class LoginScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 28),
             child: Column(
               children: [
-                const SizedBox(height: 60),
+                const SizedBox(height: 40),
                 const Text(
                   "Welcome Back",
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
@@ -27,9 +27,49 @@ class LoginScreen extends StatelessWidget {
                   "Login to continue your training",
                   style: TextStyle(color: AppColors.textGrey),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 30),
 
-                // Fields reused from signup
+                // Sign In <---> Sign Up Toggle
+                Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceGrey,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              "Sign in",
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        // navigation
+                        child: GestureDetector(
+                          onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.signup),
+                          child: const Center(
+                            child: Text(
+                              "Sign up", 
+                              style: TextStyle(color: AppColors.textGrey),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
                 const CustomTextField(hint: "Email address:"),
                 const CustomTextField(hint: "Password:", isPassword: true),
 
@@ -51,7 +91,7 @@ class LoginScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
                     onPressed: () {
-                      // Logic for login later
+                      // Login Logic for later
                     },
                     child: const Text("Login", 
                       style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
@@ -73,7 +113,6 @@ class LoginScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // Social Buttons
                 Row(
                   children: const [
                     Expanded(child: SocialButton(text: "Google")),
@@ -84,18 +123,19 @@ class LoginScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // Link to Sign Up
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text("Don't have an account? ", style: TextStyle(color: AppColors.textGrey)),
+                    // navigation
                     GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.signup),
+                      onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.signup),
                       child: Text("Sign Up!", 
                         style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
+                const SizedBox(height: 40),
               ],
             ),
           ),

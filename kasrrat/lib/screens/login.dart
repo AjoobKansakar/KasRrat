@@ -91,7 +91,8 @@ class LoginScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
                     onPressed: () {
-                      // Login Logic for later
+                      // navigation adter login
+                      Navigator.pushReplacementNamed(context, AppRoutes.home);
                     },
                     child: const Text("Login", 
                       style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),

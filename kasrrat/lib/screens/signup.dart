@@ -1,11 +1,80 @@
 import 'package:flutter/material.dart';
+// SupaBase import
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/kasrrat_colors.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/social_button.dart';
 import '../routes/app_routes.dart'; 
 
-class SignUpScreen extends StatelessWidget {
+class SignUpScreen extends StatefulWidget { 
   const SignUpScreen({super.key});
+
+  @override
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+  // To get user input
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  // loading spinner
+  bool _isLoading = false; 
+
+  Future<void> _handleSignUp() async {
+    // Validations
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Passwords do not match!")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true); // Start loading
+
+    try {
+      final supabase = Supabase.instance.client;
+      
+      await supabase.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        data: {'full_name': _nameController.text.trim()},
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registration Successful! Please check your email.")),
+        );
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
+    } on AuthException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message), backgroundColor: Colors.red),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("An unexpected error occurred."), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false); // Stop loading
+    }
+  }
+
+  @override
+  void dispose() {
+    // Cleaning up controllers to save memory
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,10 +131,11 @@ class SignUpScreen extends StatelessWidget {
 
                 const SizedBox(height: 35),
 
-                const CustomTextField(hint: "Name:"),
-                const CustomTextField(hint: "Email address:"),
-                const CustomTextField(hint: "Password:", isPassword: true),
-                const CustomTextField(hint: "Confirm password:", isPassword: true),
+                // controller use
+                CustomTextField(hint: "Name:", controller: _nameController),
+                CustomTextField(hint: "Email address:", controller: _emailController),
+                CustomTextField(hint: "Password:", isPassword: true, controller: _passwordController),
+                CustomTextField(hint: "Confirm password:", isPassword: true, controller: _confirmPasswordController),
 
                 const SizedBox(height: 15),
 
@@ -79,6 +149,7 @@ class SignUpScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
+                // Sign up button
                 SizedBox(
                   width: double.infinity,
                   height: 55,
@@ -87,11 +158,13 @@ class SignUpScreen extends StatelessWidget {
                       backgroundColor: AppColors.primary, 
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
-                    onPressed: () {},
-                    child: const Text(
-                      "Sign up",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
-                    ),
+                    onPressed: _isLoading ? null : _handleSignUp,
+                    child: _isLoading 
+                      ? const CircularProgressIndicator(color: Colors.black)
+                      : const Text(
+                          "Sign up",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                        ),
                   ),
                 ),
 
@@ -112,16 +185,15 @@ class SignUpScreen extends StatelessWidget {
                 ],
               ),
 
-                const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-                const Row(
-                  children: [
-                    Expanded(child: SocialButton(text: "Google")),
-                    SizedBox(width: 15),
-                    Expanded(child: SocialButton(text: "Apple")),
-                  ],
-                ),
-                const SizedBox(height: 40),
+              // Social Button
+              const SizedBox(
+                width: double.infinity,
+                child: SocialButton(text: "Continue with Google"),
+              ),
+
+              const SizedBox(height: 40),
               ],
             ),
           ),

@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 40),
-                // 1. Title
+                
                 const Text(
                   "Welcome Back",
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),

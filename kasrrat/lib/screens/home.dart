@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; 
 import '../core/kasrrat_colors.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -6,12 +7,18 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get current user from Supabase
+    final user = Supabase.instance.client.auth.currentUser;
+
+    // Get the username
+    final String userName = user?.userMetadata?['full_name'] ?? "User";
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text("Hello, Ajoob!", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text("Hello, $userName!", style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.person_outline, color: AppColors.primary))
         ],

@@ -89,8 +89,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
               children: [
                 const SizedBox(height: 40),
                 const Text(
-                  "Sign Up",
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+                  "Create Account",
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "Start your fitness journey",
+                  style: TextStyle(color: AppColors.textGrey),
                 ),
                 const SizedBox(height: 30),
 

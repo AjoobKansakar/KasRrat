@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  "Login to continue your training",
+                  "Sign in to continue your training",
                   style: TextStyle(color: AppColors.textGrey),
                 ),
                 const SizedBox(height: 30),
@@ -148,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _isLoading ? null : _handleLogin, 
                     child: _isLoading 
                       ? const CircularProgressIndicator(color: Colors.black)
-                      : const Text("Login", 
+                      : const Text("Sign in", 
                           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
                   ),
                 ),

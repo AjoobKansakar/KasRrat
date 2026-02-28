@@ -78,17 +78,36 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Live Camera widget
+          // .expand used to make the camera container full screen
           _isInitialized
-              ? Center(
-                  child: AspectRatio(
-                    aspectRatio: _controller!.value.aspectRatio,
-                    child: CameraPreview(_controller!), // Shows actual video
+              ? SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover, 
+                    child: SizedBox(
+                      width: _controller!.value.previewSize!.height,
+                      height: _controller!.value.previewSize!.width,
+                      child: CameraPreview(_controller!),
+                    ),
                   ),
                 )
               : const Center(
                   child: CircularProgressIndicator(color: AppColors.primary),
                 ),
+          // Gradient overlay for text visibility
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.4),
+                  Colors.transparent,
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.4),
+                ],
+              ),
+            ),
+          ),
 
           // overlay
           SafeArea(
@@ -122,7 +141,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.8),
+                    color: AppColors.primary.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(

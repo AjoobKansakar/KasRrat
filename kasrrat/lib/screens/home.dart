@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; 
 import '../core/kasrrat_colors.dart';
+import 'workout_session_screen.dart'; // Import added to access the camera screen
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -60,10 +61,11 @@ class HomeScreen extends StatelessWidget {
               crossAxisSpacing: 15,
               mainAxisSpacing: 15,
               children: [
-                _workoutCard("Squats", Icons.airline_seat_legroom_extra, "12 Sets"),
-                _workoutCard("Pushups", Icons.fitness_center, "8 Sets"),
-                _workoutCard("Lunges", Icons.directions_run, "5 Sets"),
-                _workoutCard("Bicep Curls", Icons.accessibility_new, "10 Sets"),
+                // Added 'context' to these calls so navigation can happen
+                _workoutCard(context, "Squats", Icons.airline_seat_legroom_extra, "12 Sets"),
+                _workoutCard(context, "Pushups", Icons.fitness_center, "8 Sets"),
+                _workoutCard(context, "Lunges", Icons.directions_run, "5 Sets"),
+                _workoutCard(context, "Bicep Curls", Icons.accessibility_new, "10 Sets"),
               ],
             )
           ],
@@ -73,20 +75,31 @@ class HomeScreen extends StatelessWidget {
   }
 
   // workout card build function
-  Widget _workoutCard(String title, IconData icon, String subtitle) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceGrey,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: AppColors.primary, size: 40),
-          const SizedBox(height: 10),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(subtitle, style: const TextStyle(color: AppColors.textGrey, fontSize: 12)),
-        ],
+  Widget _workoutCard(BuildContext context, String title, IconData icon, String subtitle) {
+    return GestureDetector(
+      onTap: () {
+        // Navigates to the WorkoutSessionScreen and passes the exercise name
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WorkoutSessionScreen(exerciseName: title),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceGrey,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 40),
+            const SizedBox(height: 10),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(subtitle, style: const TextStyle(color: AppColors.textGrey, fontSize: 12)),
+          ],
+        ),
       ),
     );
   }

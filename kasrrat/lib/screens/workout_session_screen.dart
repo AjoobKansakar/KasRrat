@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // Camera Package import
 import 'package:camera/camera.dart'; 
 import '../core/kasrrat_colors.dart';
+import 'dart:math' as math; 
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String exerciseName;
@@ -25,91 +26,97 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   // camera access logic
   Future<void> _setupCamera() async {
-      try {
-        // available cameras
-        final cameras = await availableCameras();
-        
-        if (cameras.isEmpty) {
-          debugPrint("No cameras found on this device");
-          return;
-        }
-
-        // Camera User
-        CameraDescription selectedCamera = cameras.first;
-        for (var cam in cameras) {
-          if (cam.lensDirection == CameraLensDirection.front) {
-            selectedCamera = cam;
-            break;
-          }
-        }
-
-        // Initializing controller
-        _controller = CameraController(
-          selectedCamera,
-          ResolutionPreset.medium,
-          enableAudio: false,
-        );
-
-        await _controller!.initialize();
-
-        // update state after initialization
-        if (mounted) {
-          setState(() {
-            _isInitialized = true;
-          });
-        }
-      } catch (e) {
-        // Error msg
-        debugPrint("KASRRAT CAMERA ERROR: $e");
+    try {
+      final cameras = await availableCameras();
+      
+      if (cameras.isEmpty) {
+        debugPrint("No cameras found on this device");
+        return;
       }
+
+      // Select Front Camera
+      CameraDescription selectedCamera = cameras.first;
+      for (var cam in cameras) {
+        if (cam.lensDirection == CameraLensDirection.front) {
+          selectedCamera = cam;
+          break;
+        }
+      }
+
+      _controller = CameraController(
+        selectedCamera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+
+      await _controller!.initialize();
+
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint("KasRrat Camera error!!!: $e");
     }
+  }
 
   @override
   void dispose() {
-    //Turn off camera when screen existed
     _controller?.dispose();
     super.dispose();
   }
 
-  // UI
   @override
   Widget build(BuildContext context) {
+    // 1. Get Screen Dimensions
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // .expand used to make the camera container full screen
+          // 2. THE ULTIMATE CENTER FIX
           _isInitialized
-              ? SizedBox.expand(
-                  child: FittedBox(
-                    fit: BoxFit.cover, 
-                    child: SizedBox(
-                      width: _controller!.value.previewSize!.height,
-                      height: _controller!.value.previewSize!.width,
-                      child: CameraPreview(_controller!),
+              ? Container(
+                  width: size.width,
+                  height: size.height,
+                  color: Colors.black,
+                  child: Center( // This ensures the pivot point is the center of the screen
+                    child: Transform.scale(
+                      scale: _calculateFullScale(size),
+                      alignment: Alignment.center, // Scale from the middle
+                      child: Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.rotationY(math.pi), // Mirror the camera
+                        child: CameraPreview(_controller!),
+                      ),
                     ),
                   ),
                 )
               : const Center(
                   child: CircularProgressIndicator(color: AppColors.primary),
                 ),
-          // Gradient overlay for text visibility
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.4),
-                  Colors.transparent,
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.4),
-                ],
+
+          // Overlay for text visibiltity
+          IgnorePointer( // Allows clicks to pass through to the camera if needed
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.4),
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.4),
+                  ],
+                ),
               ),
             ),
           ),
 
-          // overlay
+          // overlay UI
           SafeArea(
             child: Column(
               children: [
@@ -141,7 +148,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.8),
+                    color: AppColors.primary.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -156,5 +163,16 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         ],
       ),
     );
+  }
+
+  // Working on camera positioning for the workout sessions
+  double _calculateFullScale(Size screenSize) {
+    if (_controller == null || !_controller!.value.isInitialized) return 1.0;
+    
+    double cameraRatio = _controller!.value.aspectRatio;
+    double screenRatio = screenSize.aspectRatio;
+
+    // formula to center crop the camera positioning
+    return (1 / (cameraRatio * screenRatio)) * 1.1; 
   }
 }

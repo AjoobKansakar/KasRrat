@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 // Camera Package import
 import 'package:camera/camera.dart'; 
 import '../core/kasrrat_colors.dart';
-import 'dart:math' as math; 
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String exerciseName;
@@ -27,6 +26,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   // camera access logic
   Future<void> _setupCamera() async {
     try {
+      // available cameras
       final cameras = await availableCameras();
       
       if (cameras.isEmpty) {
@@ -34,7 +34,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         return;
       }
 
-      // Select Front Camera
+      // Camera User
       CameraDescription selectedCamera = cameras.first;
       for (var cam in cameras) {
         if (cam.lensDirection == CameraLensDirection.front) {
@@ -43,63 +43,71 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         }
       }
 
+      // Initializing controller
       _controller = CameraController(
         selectedCamera,
-        ResolutionPreset.medium,
+        ResolutionPreset.high, // High preset for better pose detection
         enableAudio: false,
       );
 
       await _controller!.initialize();
 
+      // update state after initialization
       if (mounted) {
         setState(() {
           _isInitialized = true;
         });
       }
     } catch (e) {
+      // Error msg
       debugPrint("KasRrat Camera error!!!: $e");
     }
   }
 
   @override
   void dispose() {
+    //Turn off camera when screen existed
     _controller?.dispose();
     super.dispose();
   }
 
+  // UI
   @override
   Widget build(BuildContext context) {
-    // 1. Get Screen Dimensions
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 2. THE ULTIMATE CENTER FIX
           _isInitialized
-              ? Container(
-                  width: size.width,
-                  height: size.height,
-                  color: Colors.black,
-                  child: Center( // This ensures the pivot point is the center of the screen
-                    child: Transform.scale(
-                      scale: _calculateFullScale(size),
-                      alignment: Alignment.center, // Scale from the middle
-                      child: Transform(
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  return SizedBox(
+                    width: constraints.maxWidth,
+                    height: constraints.maxHeight,
+                    child: ClipRect(
+                      child: OverflowBox(
                         alignment: Alignment.center,
-                        transform: Matrix4.rotationY(math.pi), // Mirror the camera
-                        child: CameraPreview(_controller!),
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          child: SizedBox(
+                            // to manage the size of the video
+                            width: constraints.maxWidth,
+                            height: constraints.maxWidth * _controller!.value.aspectRatio,
+                            // to disable the mirroring effect on the video
+                            child: CameraPreview(_controller!),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                )
-              : const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
+                  );
+                },
+              )
+            : const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
 
           // Overlay for text visibiltity
-          IgnorePointer( // Allows clicks to pass through to the camera if needed
+          IgnorePointer(
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -163,16 +171,5 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         ],
       ),
     );
-  }
-
-  // Working on camera positioning for the workout sessions
-  double _calculateFullScale(Size screenSize) {
-    if (_controller == null || !_controller!.value.isInitialized) return 1.0;
-    
-    double cameraRatio = _controller!.value.aspectRatio;
-    double screenRatio = screenSize.aspectRatio;
-
-    // formula to center crop the camera positioning
-    return (1 / (cameraRatio * screenRatio)) * 1.1; 
   }
 }

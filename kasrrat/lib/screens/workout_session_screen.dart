@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 // Camera Package import
 import 'package:camera/camera.dart'; 
 import '../core/kasrrat_colors.dart';
+// AI Logic Imports
+import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
+import '../logic/pose_detector_service.dart';
+import '../widgets/skeleton_lines.dart'; 
+// import for WriteBuffer
+import 'package:flutter/foundation.dart'; 
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String exerciseName;
@@ -17,6 +23,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   CameraController? _controller; // camera hardware
   bool _isInitialized = false;  // to track if camera is ready
 
+  final PoseDetectorService _poseDetectorService = PoseDetectorService();
+  bool _isProcessing = false; // prevent overloading the AI with too many frames
+  List<Pose> _poses = [];     // To store detected body joints
+
   @override
   void initState() {
     super.initState();
@@ -26,11 +36,11 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   // camera access logic
   Future<void> _setupCamera() async {
     try {
-      // available cameras
+      // check available cameras
       final cameras = await availableCameras();
       
       if (cameras.isEmpty) {
-        debugPrint("No cameras found on this device");
+        debugPrint("Cameras nai xaina ta!!!");
         return;
       }
 
@@ -48,9 +58,16 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         selectedCamera,
         ResolutionPreset.high, // High preset for better pose detection
         enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.nv21, 
       );
 
       await _controller!.initialize();
+
+      // send every frame to AI logic
+      _controller!.startImageStream((CameraImage image) {
+        if (_isProcessing) return; 
+        _processCameraImage(image);
+      });
 
       // update state after initialization
       if (mounted) {
@@ -64,47 +81,110 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     }
   }
 
+  // function to convert camera pixels into coordinates
+  Future<void> _processCameraImage(CameraImage image) async {
+    _isProcessing = true;
+
+    try {
+      // Create InputImage from the camera frame bytes
+      final inputImage = _inputImageFromCameraImage(image);
+      
+      if (inputImage != null) {
+        // Send image to the AI service to get the joints
+        final results = await _poseDetectorService.detectPose(inputImage);
+        
+        if (mounted) {
+          setState(() {
+            _poses = results; // Store the 17 dot points
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("AI Processing Error: $e");
+    } finally {
+      _isProcessing = false; 
+    }
+  }
+
+  // helper function to convert raw camera format to AI format
+  InputImage? _inputImageFromCameraImage(CameraImage image) {
+    // This part is vital for Samsung/Android devices
+    final sensorOrientation = _controller!.description.sensorOrientation;
+    final rotation = InputImageRotationValue.fromRawValue(sensorOrientation) ?? InputImageRotation.rotation0deg;
+    final format = InputImageFormatValue.fromRawValue(image.format.raw) ?? InputImageFormat.nv21;
+
+    if (image.planes.isEmpty) return null;
+
+    // CONCATENATING PLANES: This is the fix for the invisible dots!
+    final WriteBuffer allBytes = WriteBuffer();
+    for (final Plane plane in image.planes) {
+      allBytes.putUint8List(plane.bytes);
+    }
+    final bytes = allBytes.done().buffer.asUint8List();
+
+    return InputImage.fromBytes(
+      bytes: bytes,
+      metadata: InputImageMetadata(
+        size: Size(image.width.toDouble(), image.height.toDouble()),
+        rotation: rotation,
+        format: format,
+        bytesPerRow: image.planes[0].bytesPerRow,
+      ),
+    );
+  }
+
   @override
   void dispose() {
-    //Turn off camera when screen existed
+    // Stop the AI stream and turn off camera when screen existed
+    _controller?.stopImageStream();
     _controller?.dispose();
+    _poseDetectorService.dispose(); 
     super.dispose();
   }
 
   // UI
-  @override
+@override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
           _isInitialized
-            ? LayoutBuilder(
-                builder: (context, constraints) {
-                  return SizedBox(
-                    width: constraints.maxWidth,
-                    height: constraints.maxHeight,
-                    child: ClipRect(
-                      child: OverflowBox(
-                        alignment: Alignment.center,
-                        child: FittedBox(
-                          fit: BoxFit.cover,
-                          child: SizedBox(
-                            // to manage the size of the video
-                            width: constraints.maxWidth,
-                            height: constraints.maxWidth * _controller!.value.aspectRatio,
-                            // to disable the mirroring effect on the video
-                            child: CameraPreview(_controller!),
+            ? SizedBox.expand(
+                child: ClipRect(
+                  child: OverflowBox(
+                    alignment: Alignment.center,
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      child: Transform.scale(
+                        scaleX: 1.0,
+                        child: SizedBox(
+                          width: constraintsFix(size).width,
+                          height: constraintsFix(size).height,
+                          child: Stack(
+                            children: [
+                              CameraPreview(_controller!),
+                              // Draws the AI skeleton dots and lines on top of the camera
+                              if (_poses.isNotEmpty)
+                                CustomPaint(
+                                  size: constraintsFix(size),
+                                  painter: PosePainter(
+                                    _poses,
+                                    _controller!.value.previewSize!,
+                                    InputImageRotationValue.fromRawValue(_controller!.description.sensorOrientation) ?? InputImageRotation.rotation0deg,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               )
-            : const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
+            : const Center(child: CircularProgressIndicator()),
 
           // Overlay for text visibiltity
           IgnorePointer(
@@ -171,5 +251,11 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         ],
       ),
     );
+  }
+
+  // Helper to maintain layout constraints
+  Size constraintsFix(Size size) {
+  // We swap these for proper Android portrait orientation
+    return Size(size.width, size.width * _controller!.value.aspectRatio);
   }
 }

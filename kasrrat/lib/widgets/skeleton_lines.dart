@@ -20,10 +20,8 @@ class PosePainter extends CustomPainter {
       ..color = Colors.white;
 
     for (final pose in poses) {
-      // translate AI coordinates to Screen coordinates
       double translateX(double x) {
-      // for andriod screen height 
-        return x * size.width / imageSize.height;
+        return size.width - (x * size.width / imageSize.height);
       }
 
       double translateY(double y) {

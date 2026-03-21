@@ -6,12 +6,9 @@ import '../core/kasrrat_colors.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import '../logic/pose_detector_service.dart';
 import '../widgets/skeleton_lines.dart'; 
-// import for WriteBuffer
-import 'package:flutter/foundation.dart'; 
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String exerciseName;
-
   const WorkoutSessionScreen({super.key, required this.exerciseName});
 
   @override
@@ -27,6 +24,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   bool _isProcessing = false; // prevent overloading the AI with too many frames
   List<Pose> _poses = [];     // To store detected body joints
 
+  int _frameCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -36,47 +35,36 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   // camera access logic
   Future<void> _setupCamera() async {
     try {
-      // check available cameras
       final cameras = await availableCameras();
-      
-      if (cameras.isEmpty) {
-        debugPrint("Cameras nai xaina ta!!!");
-        return;
-      }
+      if (cameras.isEmpty) return;
 
-      // Camera User
-      CameraDescription selectedCamera = cameras.first;
-      for (var cam in cameras) {
-        if (cam.lensDirection == CameraLensDirection.front) {
-          selectedCamera = cam;
-          break;
-        }
-      }
+      CameraDescription selectedCamera = cameras.firstWhere(
+        (cam) => cam.lensDirection == CameraLensDirection.front
+      );
 
-      // Initializing controller
       _controller = CameraController(
         selectedCamera,
-        ResolutionPreset.high, // High preset for better pose detection
+        // preset redunced to low
+        ResolutionPreset.low, 
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.nv21, 
       );
 
       await _controller!.initialize();
 
-      // send every frame to AI logic
+      // send frames to AI logic with throttling
       _controller!.startImageStream((CameraImage image) {
+        _frameCount++;
+        
+        // Only processing every 3rd frame
+        if (_frameCount % 3 != 0) return;
+
         if (_isProcessing) return; 
         _processCameraImage(image);
       });
 
-      // update state after initialization
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-      }
+      if (mounted) setState(() => _isInitialized = true);
     } catch (e) {
-      // Error msg
       debugPrint("KasRrat Camera error!!!: $e");
     }
   }
@@ -86,16 +74,14 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     _isProcessing = true;
 
     try {
-      // Create InputImage from the camera frame bytes
       final inputImage = _inputImageFromCameraImage(image);
       
       if (inputImage != null) {
-        // Send image to the AI service to get the joints
         final results = await _poseDetectorService.detectPose(inputImage);
         
-        if (mounted) {
+        if (mounted && results.isNotEmpty) {
           setState(() {
-            _poses = results; // Store the 17 dot points
+            _poses = results; 
           });
         }
       }
@@ -108,34 +94,27 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   // helper function to convert raw camera format to AI format
   InputImage? _inputImageFromCameraImage(CameraImage image) {
-    // This part is vital for Samsung/Android devices
     final sensorOrientation = _controller!.description.sensorOrientation;
     final rotation = InputImageRotationValue.fromRawValue(sensorOrientation) ?? InputImageRotation.rotation0deg;
     final format = InputImageFormatValue.fromRawValue(image.format.raw) ?? InputImageFormat.nv21;
 
     if (image.planes.isEmpty) return null;
 
-    // CONCATENATING PLANES: This is the fix for the invisible dots!
-    final WriteBuffer allBytes = WriteBuffer();
-    for (final Plane plane in image.planes) {
-      allBytes.putUint8List(plane.bytes);
-    }
-    final bytes = allBytes.done().buffer.asUint8List();
+    final plane = image.planes[0];
 
     return InputImage.fromBytes(
-      bytes: bytes,
+      bytes: plane.bytes,
       metadata: InputImageMetadata(
         size: Size(image.width.toDouble(), image.height.toDouble()),
         rotation: rotation,
         format: format,
-        bytesPerRow: image.planes[0].bytesPerRow,
+        bytesPerRow: plane.bytesPerRow,
       ),
     );
   }
 
   @override
   void dispose() {
-    // Stop the AI stream and turn off camera when screen existed
     _controller?.stopImageStream();
     _controller?.dispose();
     _poseDetectorService.dispose(); 
@@ -166,7 +145,6 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                           child: Stack(
                             children: [
                               CameraPreview(_controller!),
-                              // Draws the AI skeleton dots and lines on top of the camera
                               if (_poses.isNotEmpty)
                                 CustomPaint(
                                   size: constraintsFix(size),
@@ -255,7 +233,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   // Helper to maintain layout constraints
   Size constraintsFix(Size size) {
-  // We swap these for proper Android portrait orientation
+  // proper Android portrait orientation
     return Size(size.width, size.width * _controller!.value.aspectRatio);
   }
 }

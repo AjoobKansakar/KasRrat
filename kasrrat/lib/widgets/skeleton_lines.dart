@@ -20,26 +20,33 @@ class PosePainter extends CustomPainter {
       ..color = Colors.white;
 
     for (final pose in poses) {
+      // translate AI coordinates to Screen coordinates
       double translateX(double x) {
+        // for andriod screen height 
         return size.width - (x * size.width / imageSize.height);
       }
 
       double translateY(double y) {
-      // for andriod screen width
+        // for andriod screen width
         return y * size.height / imageSize.width;
       }
 
       // landmarks points
-      pose.landmarks.forEach((type, landmark) {
-      // only marking body points so <10 landmarks only used
-        if (type.index <= 10) return; 
+      // Using a for-in loop instead of for.each
+      // for high-frequency repainting 
+      for (final entry in pose.landmarks.entries) {
+        final type = entry.key;
+        final landmark = entry.value;
+
+        // only marking body points so <10 landmarks only used
+        if (type.index <= 10) continue; 
 
         canvas.drawCircle(
           Offset(translateX(landmark.x), translateY(landmark.y)),
           5,
           dotPaint,
         );
-      });
+      }
 
       // for connection lines between the dots
       void paintLine(PoseLandmarkType type1, PoseLandmarkType type2) {
@@ -54,7 +61,7 @@ class PosePainter extends CustomPainter {
         }
       }
 
-// For Squats
+      // For Squats
       // Upper parts
       paintLine(PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder);
       paintLine(PoseLandmarkType.leftShoulder, PoseLandmarkType.leftElbow);

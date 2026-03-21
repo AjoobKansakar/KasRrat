@@ -28,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (mounted) {
         // Navigate to home after successful login
@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("An unexpected error occurred."), backgroundColor: Colors.red),
+          const SnackBar(content: Text("Connection Time Out. Check your internet connection please."), backgroundColor: Colors.red),
         );
       }
     } finally {

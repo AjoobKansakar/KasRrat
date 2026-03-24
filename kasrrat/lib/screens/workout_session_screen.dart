@@ -6,6 +6,11 @@ import '../core/kasrrat_colors.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import '../logic/pose_detector_service.dart';
 import '../widgets/skeleton_lines.dart'; 
+// Workout Logic Imports
+import '../logic/workout_logic.dart';
+import '../logic/squat_rep_counter.dart';
+// import for WriteBuffer
+// import 'package:flutter/foundation.dart'; 
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String exerciseName;
@@ -26,6 +31,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   int _frameCount = 0;
 
+  // Squat logic
+  final SquatCounter _squatCounter = SquatCounter();
+  String _currentFeedback = "Aligning...";
+
   @override
   void initState() {
     super.initState();
@@ -36,12 +45,21 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   Future<void> _setupCamera() async {
     try {
       final cameras = await availableCameras();
-      if (cameras.isEmpty) return;
+      if (cameras.isEmpty) {
+        debugPrint("Cameras nai xaina ta!!!");
+        return;
+      }
 
-      CameraDescription selectedCamera = cameras.firstWhere(
-        (cam) => cam.lensDirection == CameraLensDirection.front
-      );
+      // Camera User
+      CameraDescription selectedCamera = cameras.first;
+      for (var cam in cameras) {
+        if (cam.lensDirection == CameraLensDirection.front) {
+          selectedCamera = cam;
+          break;
+        }
+      }
 
+      // Initializing controller
       _controller = CameraController(
         selectedCamera,
         // preset redunced to low
@@ -52,7 +70,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
       await _controller!.initialize();
 
-      // send frames to AI logic with throttling
+      // send every frame to AI logic with throttling
       _controller!.startImageStream((CameraImage image) {
         _frameCount++;
         
@@ -65,6 +83,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
       if (mounted) setState(() => _isInitialized = true);
     } catch (e) {
+      // Error msg
       debugPrint("KasRrat Camera error!!!: $e");
     }
   }
@@ -79,10 +98,29 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       if (inputImage != null) {
         final results = await _poseDetectorService.detectPose(inputImage);
         
-        if (mounted && results.isNotEmpty) {
-          setState(() {
-            _poses = results; 
-          });
+        // squat movement analysis
+        if (results.isNotEmpty) {
+          final pose = results.first;
+          
+          // 3 landmarks points needed for a Squat right side is primary
+          final hip = pose.landmarks[PoseLandmarkType.rightHip];
+          final knee = pose.landmarks[PoseLandmarkType.rightKnee];
+          final ankle = pose.landmarks[PoseLandmarkType.rightAnkle];
+
+          if (hip != null && knee != null && ankle != null) {
+            // Calculate the angle at the knee
+            double angle = PoseMath.getAngle(hip, knee, ankle);
+            
+            // Pass angle AND the full pose to the Counter Logic
+            _squatCounter.processPose(angle, pose);
+
+            if (mounted) {
+              setState(() {
+                _currentFeedback = _squatCounter.feedback;
+                _poses = results; // Store the 17 dot points
+              });
+            }
+          }
         }
       }
     } catch (e) {
@@ -115,6 +153,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   @override
   void dispose() {
+    // to stop the AI stream and turn off camera when screen existed
     _controller?.stopImageStream();
     _controller?.dispose();
     _poseDetectorService.dispose(); 
@@ -145,6 +184,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                           child: Stack(
                             children: [
                               CameraPreview(_controller!),
+                              // Draws the AI skeleton dots and lines on top of the camera
                               if (_poses.isNotEmpty)
                                 CustomPaint(
                                   size: constraintsFix(size),
@@ -163,6 +203,15 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                 ),
               )
             : const Center(child: CircularProgressIndicator()),
+          
+          // For Error in form
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            color: _squatCounter.hasFormError 
+                ? Colors.red.withValues(alpha: 0.3) 
+                : Colors.transparent,
+          ),
+
 
           // Overlay for text visibiltity
           IgnorePointer(
@@ -209,6 +258,25 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                   ),
                 ),
                 const Spacer(),
+
+                // live feedback text 
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    _currentFeedback,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      // Text turns red when there is an error
+                      color: (_squatCounter.hasFormError || _currentFeedback.contains("Try again")) 
+                          ? Colors.redAccent 
+                          : AppColors.primary,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      backgroundColor: Colors.black.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 
                 // Rep Counter
                 Container(
@@ -217,9 +285,9 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                     color: AppColors.primary.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    "REPS: 0",
-                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black),
+                  child: Text(
+                    "REPS: ${_squatCounter.reps}", // dynamic rep count
+                    style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                 ),
                 const SizedBox(height: 50),

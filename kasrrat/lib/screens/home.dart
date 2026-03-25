@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; 
 import '../core/kasrrat_colors.dart';
-import 'workout_session_screen.dart'; // Import added to access the camera screen
+import 'get_ready_screen.dart'; // navigate to GetReadyScreen when clicked on the exercise card
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -61,7 +62,7 @@ class HomeScreen extends StatelessWidget {
               crossAxisSpacing: 15,
               mainAxisSpacing: 15,
               children: [
-                // Added 'context' to these calls so navigation can happen
+                // Static UI card for now
                 _workoutCard(context, "Squats", Icons.airline_seat_legroom_extra, "12 Sets"),
                 _workoutCard(context, "Pushups", Icons.fitness_center, "8 Sets"),
                 _workoutCard(context, "Lunges", Icons.directions_run, "5 Sets"),
@@ -78,11 +79,11 @@ class HomeScreen extends StatelessWidget {
   Widget _workoutCard(BuildContext context, String title, IconData icon, String subtitle) {
     return GestureDetector(
       onTap: () {
-        // Navigates to the WorkoutSessionScreen and passes the exercise name
+        // Navigate to GetReadyScreen first --> select rep range --> when requirements to start the set is matched auto-navigate to WorkoutSessionScreen
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => WorkoutSessionScreen(exerciseName: title),
+            builder: (context) => GetReadyScreen(exerciseName: title),
           ),
         );
       },

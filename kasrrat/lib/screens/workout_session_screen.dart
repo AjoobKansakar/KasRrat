@@ -7,10 +7,7 @@ import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import '../logic/pose_detector_service.dart';
 import '../widgets/skeleton_lines.dart'; 
 // Workout Logic Imports
-import '../logic/workout_logic.dart';
 import '../logic/squat_rep_counter.dart';
-// import for WriteBuffer
-// import 'package:flutter/foundation.dart'; 
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String exerciseName;
@@ -102,24 +99,14 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         if (results.isNotEmpty) {
           final pose = results.first;
           
-          // 3 landmarks points needed for a Squat right side is primary
-          final hip = pose.landmarks[PoseLandmarkType.rightHip];
-          final knee = pose.landmarks[PoseLandmarkType.rightKnee];
-          final ankle = pose.landmarks[PoseLandmarkType.rightAnkle];
+          // passing whole pose to the counter to check both legs and hips
+          _squatCounter.processPose(pose);
 
-          if (hip != null && knee != null && ankle != null) {
-            // Calculate the angle at the knee
-            double angle = PoseMath.getAngle(hip, knee, ankle);
-            
-            // Pass angle AND the full pose to the Counter Logic
-            _squatCounter.processPose(angle, pose);
-
-            if (mounted) {
-              setState(() {
-                _currentFeedback = _squatCounter.feedback;
-                _poses = results; // Store the 17 dot points
-              });
-            }
+          if (mounted) {
+            setState(() {
+              _currentFeedback = _squatCounter.feedback;
+              _poses = results; // Store the 17 dot points
+            });
           }
         }
       }

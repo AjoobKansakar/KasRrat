@@ -99,7 +99,7 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
                     ),
                   );
                 },
-                child: const Text("START YOUT SET", 
+                child: const Text("START SET", 
                   style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
               ),
             ),

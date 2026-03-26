@@ -8,10 +8,19 @@ import '../logic/pose_detector_service.dart';
 import '../widgets/skeleton_lines.dart'; 
 // Workout Logic Imports
 import '../logic/squat_rep_counter.dart';
+import 'workout_complete_screen.dart';
+// import for WriteBuffer
+import 'dart:typed_data'; // memory management using ByteData
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String exerciseName;
-  const WorkoutSessionScreen({super.key, required this.exerciseName});
+  final int targetReps;
+
+  const WorkoutSessionScreen({
+    super.key, 
+    required this.exerciseName,
+    required this.targetReps,
+  });
 
   @override
   State<WorkoutSessionScreen> createState() => _WorkoutSessionScreenState();
@@ -31,23 +40,29 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   // Squat logic
   final SquatCounter _squatCounter = SquatCounter();
   String _currentFeedback = "Aligning...";
+  bool _workoutCompleted = false;
+
+  // Requirements check before starting the workout
+  bool _isBodyInFrame = false;
+  bool _isLightingGood = false;
+  bool _sessionStarted = false; // track if user clicked the Start button inside this screen
+
+  // Auto workout session start
+  int _countdown = 5; // 5 second countdown before starting the workout
+  bool _isCountingDown = false;
 
   @override
   void initState() {
     super.initState();
-    _setupCamera(); // sets the camera up when the screen starts
+    _setupCamera(); // set camera when the screen starts
   }
 
   // camera access logic
   Future<void> _setupCamera() async {
     try {
       final cameras = await availableCameras();
-      if (cameras.isEmpty) {
-        debugPrint("Cameras nai xaina ta!!!");
-        return;
-      }
+      if (cameras.isEmpty) return;
 
-      // Camera User
       CameraDescription selectedCamera = cameras.first;
       for (var cam in cameras) {
         if (cam.lensDirection == CameraLensDirection.front) {
@@ -56,10 +71,9 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         }
       }
 
-      // Initializing controller
       _controller = CameraController(
         selectedCamera,
-        // preset redunced to low
+        // preset redunced to low due to latency issue
         ResolutionPreset.low, 
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.nv21, 
@@ -67,18 +81,22 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
       await _controller!.initialize();
 
+      if (!mounted) return;
+
       // send every frame to AI logic with throttling
       _controller!.startImageStream((CameraImage image) {
+        if (_workoutCompleted) return;
         _frameCount++;
-        
-        // Only processing every 3rd frame
         if (_frameCount % 3 != 0) return;
-
         if (_isProcessing) return; 
         _processCameraImage(image);
       });
 
-      if (mounted) setState(() => _isInitialized = true);
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
     } catch (e) {
       // Error msg
       debugPrint("KasRrat Camera error!!!: $e");
@@ -90,24 +108,57 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     _isProcessing = true;
 
     try {
+      // to check the ligthing in the video
+      final int pixelCount = (image.width * image.height).toInt();
+      final Uint8List yPlane = image.planes[0].bytes;
+      int sum = 0;
+      for (int i = 0; i < pixelCount; i += 20) { sum += yPlane[i]; }
+      bool lightOk = (sum / (pixelCount / 20)) > 60;
+
       final inputImage = _inputImageFromCameraImage(image);
       
       if (inputImage != null) {
         final results = await _poseDetectorService.detectPose(inputImage);
-        
-        // squat movement analysis
+        bool bodyOk = false;
+
         if (results.isNotEmpty) {
           final pose = results.first;
-          
-          // passing whole pose to the counter to check both legs and hips
-          _squatCounter.processPose(pose);
 
-          if (mounted) {
-            setState(() {
-              _currentFeedback = _squatCounter.feedback;
-              _poses = results; // Store the 17 dot points
-            });
+          // every landmarks should be visible for the workout to start
+          final requiredLandmarks = [
+            PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder, // shoulder
+            PoseLandmarkType.leftHip, PoseLandmarkType.rightHip,  // hip
+            PoseLandmarkType.leftKnee, PoseLandmarkType.rightKnee,  // knee
+            PoseLandmarkType.leftAnkle, PoseLandmarkType.rightAnkle, // Ankles
+          ];
+
+          // Check if every landmark is visible with high confidence (> 0.7)
+          bodyOk = requiredLandmarks.every((type) => (pose.landmarks[type]?.likelihood ?? 0) > 0.7);
+
+          // only run exercise logic if the user is fully in the frame
+          if (_sessionStarted) {
+            _squatCounter.processPose(pose);
           }
+        }
+
+        if (mounted) {
+          setState(() {
+            _isBodyInFrame = bodyOk;
+            _isLightingGood = lightOk;
+            _poses = results;
+            if (_sessionStarted) _currentFeedback = _squatCounter.feedback;
+
+            // Auto start trigger 
+            // Only start countdown if the full body with landmarks is detected clearly
+            if (bodyOk && lightOk && !_sessionStarted && !_isCountingDown) {
+              _startAutoCountdown();
+            }
+
+            if (!_workoutCompleted && _squatCounter.reps >= widget.targetReps) {
+              _workoutCompleted = true;
+              _onWorkoutFinished();
+            }
+          });
         }
       }
     } catch (e) {
@@ -117,14 +168,53 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     }
   }
 
+  // auto start countdown function
+  void _startAutoCountdown() async {
+    _isCountingDown = true;
+    for (int i = 5; i > 0; i--) { // 5 second countdown
+      // If the user moves out of frame during the 5 seconds, cancel everything
+      if (!mounted || !_isBodyInFrame || !_isLightingGood) {
+        setState(() {
+          _isCountingDown = false;
+          _countdown = 5; 
+        });
+        return; 
+      }
+      setState(() => _countdown = i);
+      await Future.delayed(const Duration(seconds: 1));
+    }
+
+    if (mounted && _isBodyInFrame && _isLightingGood) {
+      setState(() {
+        _sessionStarted = true;
+        _isCountingDown = false;
+      });
+    }
+  }
+
+  void _onWorkoutFinished() {
+    if (_controller != null && _controller!.value.isStreamingImages) {
+       _controller?.stopImageStream();
+    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WorkoutCompleteScreen(
+          exerciseName: widget.exerciseName,
+          repsCompleted: _squatCounter.reps,
+        ),
+      ),
+    );
+  }
+
   // helper function to convert raw camera format to AI format
   InputImage? _inputImageFromCameraImage(CameraImage image) {
+    if (_controller == null || !_controller!.value.isInitialized) return null;
     final sensorOrientation = _controller!.description.sensorOrientation;
     final rotation = InputImageRotationValue.fromRawValue(sensorOrientation) ?? InputImageRotation.rotation0deg;
     final format = InputImageFormatValue.fromRawValue(image.format.raw) ?? InputImageFormat.nv21;
 
     if (image.planes.isEmpty) return null;
-
     final plane = image.planes[0];
 
     return InputImage.fromBytes(
@@ -140,8 +230,9 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   @override
   void dispose() {
-    // to stop the AI stream and turn off camera when screen existed
-    _controller?.stopImageStream();
+    if (_controller != null && _controller!.value.isInitialized && _controller!.value.isStreamingImages) {
+      _controller!.stopImageStream();
+    }
     _controller?.dispose();
     _poseDetectorService.dispose(); 
     super.dispose();
@@ -191,34 +282,15 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
               )
             : const Center(child: CircularProgressIndicator()),
           
-          // For Error in form
+          // Error background with red color effect
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            color: _squatCounter.hasFormError 
+            color: (_squatCounter.hasFormError && _sessionStarted) 
                 ? Colors.red.withValues(alpha: 0.3) 
                 : Colors.transparent,
           ),
 
-
-          // Overlay for text visibiltity
-          IgnorePointer(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.4),
-                    Colors.transparent,
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.4),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // overlay UI
+          // HUD overlay
           SafeArea(
             child: Column(
               children: [
@@ -227,55 +299,94 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      Text(
-                        widget.exerciseName.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white, 
-                          fontSize: 20, 
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2
-                        ),
+                      IconButton(icon: const Icon(Icons.arrow_back_ios, color: Colors.white), onPressed: () => Navigator.pop(context)),
+                      // when the session starts live indicator is kept beside the exercise title
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.exerciseName.toUpperCase(), 
+                            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 2)
+                          ),
+                          if (_sessionStarted) ...[
+                            const SizedBox(width: 10),
+                            _buildLiveIndicator(),
+                          ],
+                        ],
                       ),
                       const SizedBox(width: 40),
                     ],
                   ),
                 ),
+                
+                // Requirement list until the workout session begins
+                if (!_sessionStarted)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildCheckChip("Full Body", _isBodyInFrame),
+                      const SizedBox(width: 10),
+                      _buildCheckChip("Lighting", _isLightingGood),
+                    ],
+                  ),
+                ),
+
                 const Spacer(),
 
-                // live feedback text 
+                // countdown UI
+                if (_isCountingDown && !_sessionStarted)
+                Center(
+                  child: Text(
+                    "STAY IN FRAME\n$_countdown",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.primary, fontSize: 30, fontWeight: FontWeight.w900),
+                  ),
+                ),
+
+                // feedback text 
+                if (_sessionStarted)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
                     _currentFeedback,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      // Text turns red when there is an error
-                      color: (_squatCounter.hasFormError || _currentFeedback.contains("Try again")) 
-                          ? Colors.redAccent 
-                          : AppColors.primary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      backgroundColor: Colors.black.withValues(alpha: 0.5),
+                      color: (_squatCounter.hasFormError || _currentFeedback.contains("Try again")) ? Colors.redAccent : AppColors.primary,
+                      fontSize: 22, fontWeight: FontWeight.bold, backgroundColor: Colors.black54,
                     ),
                   ),
                 ),
+                
                 const SizedBox(height: 20),
                 
-                // Rep Counter
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    "REPS: ${_squatCounter.reps}", // dynamic rep count
-                    style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black),
-                  ),
+                // main action button and rep display 
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: _sessionStarted 
+                  ? Container( // Show Reps when started
+                      padding: const EdgeInsets.all(15),
+                      width: double.infinity,
+                      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20)),
+                      child: Center(child: Text("REPS: ${_squatCounter.reps} / ${widget.targetReps}", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black))),
+                    )
+                  // Show Status bar when not started
+                  : Container( 
+                      height: 60,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: (_isBodyInFrame && _isLightingGood) ? Colors.green.withValues(alpha: 0.2) : Colors.red.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: (_isBodyInFrame && _isLightingGood) ? Colors.green : Colors.red),
+                      ),
+                      child: Center(
+                        child: Text(
+                          (_isBodyInFrame && _isLightingGood) ? "STABILIZING..." : "POSITION FULL BODY", 
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+                        ),
+                      ),
+                    ),
                 ),
                 const SizedBox(height: 50),
               ],
@@ -286,9 +397,62 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     );
   }
 
-  // Helper to maintain layout constraints
+  // live indicator button
+  Widget _buildLiveIndicator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5), 
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          const Text(
+            "LIVE",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCheckChip(String label, bool isMet) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        // changed withOpacity to withValues due to flutter update
+        color: isMet ? Colors.green.withValues(alpha: 0.2) : Colors.red.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isMet ? Colors.green : Colors.red),
+      ),
+      child: Row(
+        children: [
+          Icon(isMet ? Icons.check_circle : Icons.error_outline, color: isMet ? Colors.green : Colors.red, size: 16),
+          const SizedBox(width: 5),
+          Text(label, style: TextStyle(color: isMet ? Colors.green : Colors.red, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
   Size constraintsFix(Size size) {
-  // proper Android portrait orientation
+  // proper Android portrait display
+    if (_controller == null || !_controller!.value.isInitialized) return size;
     return Size(size.width, size.width * _controller!.value.aspectRatio);
   }
 }

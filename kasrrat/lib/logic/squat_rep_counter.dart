@@ -3,12 +3,18 @@ import 'workout_logic.dart'; // for angle calculations
 
 // Rules for a complete squat movement
 class SquatCounter {
-  int reps = 0;
+  int reps = 0;         // Strict counter to only count valid reps only
+  int goodReps = 0;     // Matches reps for summary clarity
+  int totalAttempts = 0; // to track every time the user stands up after going down
+  
   bool isDown = false; // track if the user has reached the bottom
   bool depthAchieved = false; // tracks if the user actually hit the required depth
   bool hasFormError = false; // tracks if there is currently a form error 
   bool repHadError = false; // tracks if the current rep had a form mistake at any point
   String feedback = "Get Ready!";
+
+  // store errors found during the set for review
+  Set<String> errorsFound = {};
 
   // check if the user is standing sideways
   void processPose(Pose pose) {
@@ -38,7 +44,8 @@ class SquatCounter {
     if (shoulderWidth > torsoHeight * 0.6) {
       feedback = "Stand sideways infront of the camera please";
       hasFormError = true;
-      repHadError = true; // to mark  this attempt is invalid
+      repHadError = true; // to block the rep for bad form
+      errorsFound.add("Stand sideways"); // Record the error type
       return; 
     }
    
@@ -63,20 +70,21 @@ class SquatCounter {
       feedback = "Keep your back straight!";
       hasFormError = true;
       repHadError = true; // Persistent memory that the back was bent during the rep
+      errorsFound.add("Back Bending"); // Record the error type
     } else {
       hasFormError = false;
     }
 
     // To differentiate between a squat and a lunge
-    // Calculate the difference between the two knees to detect lunges
     double kneeDiff = (leftKneeAngle - rightKneeAngle).abs();
 
     // If one knee is bent significantly more than the other, then its considered a lunge
     if (kneeDiff > 40 && (leftKneeAngle < 130 || rightKneeAngle < 130)) {
       feedback = "Perform a Squat, thats a Lunge!";
       hasFormError = true;
-      repHadError = true; // Mark as mistake
-      return; // Stop processing this frame to prevent lunge reps from counting
+      repHadError = true; 
+      errorsFound.add("Form Issues"); // Record the error type
+      return; 
     }
 
     // Bilateral Check
@@ -86,18 +94,18 @@ class SquatCounter {
       depthAchieved = true; 
       if (!hasFormError) feedback = "Now Stand Up!";
     } 
-    // Errors check
-    // If one leg is deep but the other is not
+    // check if one leg is deep but the other is not
     else if ((leftKneeAngle < 100 && rightKneeAngle > 115) || (rightKneeAngle < 100 && leftKneeAngle > 115)) {
         feedback = "Balance your weight on both legs!";
         hasFormError = true;
-        repHadError = true;
+        repHadError = true; // if yes block the rep
+        errorsFound.add("Form Issues");
     }
-    // if the squat depth is not enough shows red screen
+    // if the squat depth is not enough
     else if (leftKneeAngle < 140 || rightKneeAngle < 140) {
       isDown = true;
       if (!depthAchieved) {
-        hasFormError = true; // Trigger red screen for less depth
+        hasFormError = true; 
         feedback = "Go Lower!";
       }
     }
@@ -105,24 +113,31 @@ class SquatCounter {
     // angle > 160, the user is standing straight
     if (leftKneeAngle > 165 && rightKneeAngle > 165) {
       if (isDown) {
-        // rep count only if the required depth is reached && no form error happened during the whole move
+        totalAttempts++; // count every stand-up as an attempt
+
+        // reps are only counted if the form and depth was reached AND no errors occurs
         if (depthAchieved && !repHadError) {
           reps++;      
+          goodReps++; 
           feedback = "Good Job!";
           hasFormError = false;
-        } else if (repHadError) {
-          // if the rep was completed by the form was bad 
+        } 
+        else if (repHadError) {
+          // If form was bad, rep is not counted
           feedback = "Form was not right, try again by keeping the back straight";
           hasFormError = true; 
-        } else if (!depthAchieved) {
+        } 
+        else if (!depthAchieved) {
+          // If squat dept was not enough, rep is not counted
           feedback = "You did not go down enough. Try again with full range of motion";
-          hasFormError = true; // Keep screen red for the failure message
+          hasFormError = true; 
+          errorsFound.add("Shallow Depth");
         }
         
-        // Reset for next rep
+        // Reset state for next rep
         isDown = false; 
         depthAchieved = false;
-        repHadError = false; // Reset the mistake memory for the next rep
+        repHadError = false; 
       } else {
         if (!hasFormError) feedback = "Squat Down!";
       }

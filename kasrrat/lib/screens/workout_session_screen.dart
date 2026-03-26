@@ -192,16 +192,20 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     }
   }
 
+  // Recording data for summary
   void _onWorkoutFinished() {
     if (_controller != null && _controller!.value.isStreamingImages) {
-       _controller?.stopImageStream();
+      _controller?.stopImageStream();
     }
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => WorkoutCompleteScreen(
           exerciseName: widget.exerciseName,
-          repsCompleted: _squatCounter.reps,
+          repsCompleted: _squatCounter.reps, // to show the valid rep counted
+          totalReps: _squatCounter.totalAttempts, // to show how many rep user tried
+          goodReps: _squatCounter.goodReps, // to store good reps
+          errors: _squatCounter.errorsFound, // to store the error during the workout
         ),
       ),
     );

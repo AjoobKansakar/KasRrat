@@ -6,7 +6,6 @@ class SquatCounter {
   int reps = 0;         // Strict counter to only count valid reps only
   int goodReps = 0;     // Matches reps for summary clarity
   int totalAttempts = 0; // to track every time the user stands up after going down
-  
   bool isDown = false; // track if the user has reached the bottom
   bool depthAchieved = false; // tracks if the user actually hit the required depth
   bool hasFormError = false; // tracks if there is currently a form error 
@@ -17,7 +16,8 @@ class SquatCounter {
   Set<String> errorsFound = {};
 
   // check if the user is standing sideways
-  void processPose(Pose pose) {
+  // callbacks for audio feedback
+  void processPose(Pose pose, {required Function() onRepCount, required Function() onFormError}) {
     
     // user sideways check by checking the horizontal distance between the shoulders compared to the height of the torse
     final leftShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
@@ -43,6 +43,7 @@ class SquatCounter {
     // If shoulder width is too large compared to torso height, they are facing the camera
     if (shoulderWidth > torsoHeight * 0.6) {
       feedback = "Stand sideways infront of the camera please";
+      if (!hasFormError) onFormError(); // Trigger voice once
       hasFormError = true;
       repHadError = true; // to block the rep for bad form
       errorsFound.add("Stand sideways"); // Record the error type
@@ -68,6 +69,7 @@ class SquatCounter {
 
     if (torsoAngle > 30) {
       feedback = "Keep your back straight!";
+      if (!hasFormError) onFormError(); // Trigger voice once
       hasFormError = true;
       repHadError = true; // Persistent memory that the back was bent during the rep
       errorsFound.add("Back Bending"); // Record the error type
@@ -81,6 +83,7 @@ class SquatCounter {
     // If one knee is bent significantly more than the other, then its considered a lunge
     if (kneeDiff > 40 && (leftKneeAngle < 130 || rightKneeAngle < 130)) {
       feedback = "Perform a Squat, thats a Lunge!";
+      if (!hasFormError) onFormError(); // Trigger voice once
       hasFormError = true;
       repHadError = true; 
       errorsFound.add("Form Issues"); // Record the error type
@@ -97,6 +100,7 @@ class SquatCounter {
     // check if one leg is deep but the other is not
     else if ((leftKneeAngle < 100 && rightKneeAngle > 115) || (rightKneeAngle < 100 && leftKneeAngle > 115)) {
         feedback = "Balance your weight on both legs!";
+        if (!hasFormError) onFormError(); // Trigger voice once
         hasFormError = true;
         repHadError = true; // if yes block the rep
         errorsFound.add("Form Issues");
@@ -119,16 +123,19 @@ class SquatCounter {
         if (depthAchieved && !repHadError) {
           reps++;      
           goodReps++; 
+          onRepCount(); // rep count feedback
           feedback = "Good Job!";
           hasFormError = false;
         } 
         else if (repHadError) {
           // If form was bad, rep is not counted
+          onFormError(); // Error feedback
           feedback = "Form was not right, try again by keeping the back straight";
           hasFormError = true; 
         } 
         else if (!depthAchieved) {
           // If squat dept was not enough, rep is not counted
+          onFormError(); // Error feedback
           feedback = "You did not go down enough. Try again with full range of motion";
           hasFormError = true; 
           errorsFound.add("Shallow Depth");

@@ -9,6 +9,8 @@ import '../widgets/skeleton_lines.dart';
 // Workout Logic Imports
 import '../logic/squat_rep_counter.dart';
 import 'workout_complete_screen.dart';
+// TTS Service 
+import '../logic/tts_service.dart'; 
 // import for WriteBuffer
 import 'dart:typed_data'; // memory management using ByteData
 
@@ -50,6 +52,9 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   // Auto workout session start
   int _countdown = 5; // 5 second countdown before starting the workout
   bool _isCountingDown = false;
+
+  // TTS Voice Service
+  final TTSService _ttsService = TTSService(); // Initializing voice
 
   @override
   void initState() {
@@ -137,7 +142,12 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
           // only run exercise logic if the user is fully in the frame
           if (_sessionStarted) {
-            _squatCounter.processPose(pose);
+            // audio feedback 
+            _squatCounter.processPose(
+              pose,
+              onRepCount: () => _ttsService.speak("Good rep!"),
+              onFormError: () => _ttsService.speak("Error! Try again"),
+            );
           }
         }
 
@@ -238,7 +248,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       _controller!.stopImageStream();
     }
     _controller?.dispose();
-    _poseDetectorService.dispose(); 
+    _poseDetectorService.dispose(); // stop pose detection if user exits
+    _ttsService.stop(); // stop voice if user exits
     super.dispose();
   }
 

@@ -8,6 +8,10 @@ import '../logic/pose_detector_service.dart';
 import '../widgets/skeleton_lines.dart'; 
 // Workout Logic Imports
 import '../logic/squat_rep_counter.dart';
+import '../logic/pushup_rep_counter.dart';  // Push-up logic
+// import '../logic/lunge_rep_counter.dart';   // NEW: Lunge logic
+// import '../logic/plank_rep_counter.dart';   // NEW: Plank logic
+// Summary screen import
 import 'workout_complete_screen.dart';
 // TTS Service 
 import '../logic/tts_service.dart'; 
@@ -39,8 +43,14 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   int _frameCount = 0;
 
+  // Counters for the exercises
   // Squat logic
   final SquatCounter _squatCounter = SquatCounter();
+  // pushup logic
+  final PushupCounter _pushupCounter = PushupCounter();
+  // final LungeCounter _lungeCounter = LungeCounter(); // KEEP THIS LATER
+  // final PlankCounter _plankCounter = PlankCounter(); // KEEP THIS LATER
+
   String _currentFeedback = "Aligning...";
   bool _workoutCompleted = false;
 
@@ -55,6 +65,26 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   // TTS Voice Service
   final TTSService _ttsService = TTSService(); // Initializing voice
+
+  // Helper to get the active exercise rep count, routes counter depending on which exercise is currently active
+  int get _currentReps {
+    switch (widget.exerciseName.toLowerCase()) {
+      case 'pushups': return _pushupCounter.reps; // pushup rep counter
+      // case 'lunges':  return _lungeCounter.reps; // KEEP THIS LATER
+      // case 'plank':   return _plankCounter.reps; // KEEP THIS LATER
+      default:        return _squatCounter.reps; // defualt squats rep counter
+    }
+  }
+
+  // Helper to get the active exerise form error state, used to trigger the red screen overlay
+  bool get _currentHasFormError {
+    switch (widget.exerciseName.toLowerCase()) {
+      case 'pushups': return _pushupCounter.hasFormError;
+      // case 'lunges':  return _lungeCounter.hasFormError; // KEEP THIS LATER
+      // case 'plank':   return _plankCounter.hasFormError; // KEEP THIS LATER
+      default:        return _squatCounter.hasFormError;
+    }
+  }
 
   @override
   void initState() {
@@ -142,12 +172,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
           // only run exercise logic if the user is fully in the frame
           if (_sessionStarted) {
-            // audio feedback 
-            _squatCounter.processPose(
-              pose,
-              onRepCount: () => _ttsService.speak("Good rep!"),
-              onFormError: () => _ttsService.speak("Error! Try again"),
-            );
+            // routing the pose to the correct counter based on exersie name
+            _routePoseToCounter(pose); // processPose() is same for all the counters
           }
         }
 
@@ -156,7 +182,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
             _isBodyInFrame = bodyOk;
             _isLightingGood = lightOk;
             _poses = results;
-            if (_sessionStarted) _currentFeedback = _squatCounter.feedback;
+            if (_sessionStarted) _currentFeedback = _getActiveFeedback();
 
             // Auto start trigger 
             // Only start countdown if the full body with landmarks is detected clearly
@@ -164,7 +190,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
               _startAutoCountdown();
             }
 
-            if (!_workoutCompleted && _squatCounter.reps >= widget.targetReps) {
+            if (!_workoutCompleted && _currentReps >= widget.targetReps) {
               _workoutCompleted = true;
               _onWorkoutFinished();
             }
@@ -178,11 +204,84 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     }
   }
 
+  // Routing the detected pose to the active counter
+  void _routePoseToCounter(Pose pose) {
+    switch (widget.exerciseName.toLowerCase()) {
+      case 'pushups':
+        _pushupCounter.processPose(
+          pose,
+          onRepCount: () => _ttsService.speak("Good rep!"),
+          onFormError: () => _ttsService.speak("Error! Try again"),
+        );
+      //   break;
+      // case 'lunges': // KEEP THIS LATER
+      //   _lungeCounter.processPose(
+      //     pose,
+      //     onRepCount: () => _ttsService.speak("Good rep!"),
+      //     onFormError: () => _ttsService.speak("Error! Try again"),
+      //   );
+      //   break;
+      // case 'plank': // KEEP THIS LATER
+      //   _plankCounter.processPose(
+      //     pose,
+      //     onRepCount: () => _ttsService.speak("Keep going!"),
+      //     onFormError: () => _ttsService.speak("Fix your form"),
+      //   );
+      //   break;
+      default:
+        _squatCounter.processPose(
+          pose,
+          onRepCount: () => _ttsService.speak("Good rep!"),
+          onFormError: () => _ttsService.speak("Error! Try again"),
+        );
+    }
+  }
+
+  // return feedback text from the active counter
+  String _getActiveFeedback() {
+    switch (widget.exerciseName.toLowerCase()) {
+      case 'pushups': return _pushupCounter.feedback;
+      // case 'lunges':  return _lungeCounter.feedback; // KEEP THIS LATER
+      // case 'plank':   return _plankCounter.feedback; // KEEP THIS LATER
+      default:        return _squatCounter.feedback;
+    }
+  }
+
+  // return error set from the active counter, used to build WorkoutCompleteScreen review
+  Set<String> _getActiveErrors() {
+    switch (widget.exerciseName.toLowerCase()) {
+      case 'pushups': return _pushupCounter.errorsFound;
+      // case 'lunges':  return _lungeCounter.errorsFound; // KEEP THIS LATER
+      // case 'plank':   return _plankCounter.errorsFound; // KEEP THIS LATER
+      default:        return _squatCounter.errorsFound;
+    }
+  }
+
+  // returns totalAttempts from the active counter
+  int _getActiveTotalAttempts() {
+    switch (widget.exerciseName.toLowerCase()) {
+      case 'pushups': return _pushupCounter.totalAttempts;
+      // case 'lunges':  return _lungeCounter.totalAttempts; // KEEP THIS LATER
+      // case 'plank':   return _plankCounter.totalAttempts; // KEEP THIS LATER
+      default:        return _squatCounter.totalAttempts;
+    }
+  }
+
+  // returns goodreps from the active counter
+  int _getActiveGoodReps() {
+    switch (widget.exerciseName.toLowerCase()) {
+      case 'pushups': return _pushupCounter.goodReps;
+      // case 'lunges':  return _lungeCounter.goodReps; // KEEP THIS LATER
+      // case 'plank':   return _plankCounter.goodReps; // KEEP THIS LATER
+      default:        return _squatCounter.goodReps;
+    }
+  }
+
   // auto start countdown function
   void _startAutoCountdown() async {
     _isCountingDown = true;
     for (int i = 5; i > 0; i--) { // 5 second countdown
-      // If the user moves out of frame during the 5 seconds, cancel everything
+      // If the user moves out of frame during the 5 seconds, cancel
       if (!mounted || !_isBodyInFrame || !_isLightingGood) {
         setState(() {
           _isCountingDown = false;
@@ -212,10 +311,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       MaterialPageRoute(
         builder: (context) => WorkoutCompleteScreen(
           exerciseName: widget.exerciseName,
-          repsCompleted: _squatCounter.reps, // to show the valid rep counted
-          totalReps: _squatCounter.totalAttempts, // to show how many rep user tried
-          goodReps: _squatCounter.goodReps, // to store good reps
-          errors: _squatCounter.errorsFound, // to store the error during the workout
+          repsCompleted: _currentReps,                  // to show the valid rep counted
+          totalReps: _getActiveTotalAttempts(),         // to show how many rep user tried
+          goodReps: _getActiveGoodReps(),               // to store good reps
+          errors: _getActiveErrors(),                   // to store the error during the workout
         ),
       ),
     );
@@ -300,7 +399,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
           // Error background with red color effect
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            color: (_squatCounter.hasFormError && _sessionStarted) 
+            color: (_currentHasFormError && _sessionStarted) 
                 ? Colors.red.withValues(alpha: 0.3) 
                 : Colors.transparent,
           ),
@@ -368,7 +467,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                     _currentFeedback,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: (_squatCounter.hasFormError || _currentFeedback.contains("Try again")) ? Colors.redAccent : AppColors.primary,
+                      color: (_currentHasFormError || _currentFeedback.contains("Try again")) ? Colors.redAccent : AppColors.primary,
                       fontSize: 22, fontWeight: FontWeight.bold, backgroundColor: Colors.black54,
                     ),
                   ),
@@ -384,7 +483,13 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                       padding: const EdgeInsets.all(15),
                       width: double.infinity,
                       decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20)),
-                      child: Center(child: Text("REPS: ${_squatCounter.reps} / ${widget.targetReps}", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black))),
+                      // changinf label from reps to secs for plank 
+                      child: Center(child: Text(
+                        widget.exerciseName.toLowerCase() == 'plank'
+                          ? "SECONDS: $_currentReps / ${widget.targetReps}"
+                          : "REPITITIONS: $_currentReps / ${widget.targetReps}",
+                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+                      )),
                     )
                   // Show Status bar when not started
                   : Container( 

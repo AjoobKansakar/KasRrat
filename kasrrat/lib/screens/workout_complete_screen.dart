@@ -63,6 +63,9 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
     // Calculate a score out of 100 based on form quality
     int score = widget.repsCompleted == 0 ? 0 : ((widget.goodReps / widget.repsCompleted) * 100).toInt();
 
+    // Change from Reps to Seconfs for Planks
+    // bool isPlank = widget.exerciseName.toLowerCase() == 'plank';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -120,28 +123,54 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
 
               // What went well section
               _buildSectionTitle("What went well"),
-              _buildReviewItem(Icons.check_circle, Colors.tealAccent, "Completed ${widget.repsCompleted} total reps"),
-              if (score > 70) _buildReviewItem(Icons.check_circle, Colors.tealAccent, "Maintained great back posture"),
-              _buildReviewItem(Icons.check_circle, Colors.tealAccent, "Camera view stayed clear"),
+
+              // Seconds label for Plank
+              // _buildReviewItem(Icons.check_circle, Colors.tealAccent,
+              //   isPlank
+              //     ? "Held for ${widget.repsCompleted} seconds"
+              //     : "Completed ${widget.repsCompleted} total reps"),
+              // if (score > 70) _buildReviewItem(Icons.check_circle, Colors.tealAccent, "Maintained great form throughout"),
+              // _buildReviewItem(Icons.check_circle, Colors.tealAccent, "Camera view stayed clear"),
 
               const SizedBox(height: 30),
 
               // Needs work section
               if (widget.errors.isNotEmpty) ...[
                 _buildSectionTitle("Needs work"),
+
+                // Squats errors
                 if (widget.errors.contains("Back Bending"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Back rounds up at the bottom, keep the back straigth as possible"),
-                if (widget.errors.contains("Shallow Depth"))
+                // if (widget.errors.contains("Shallow Depth") && !isPlank)  // Add this later for planks
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Range of motion was too short, go deeper"),
                 if (widget.errors.contains("Stand sideways"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Body was not in the ideal positioning for Pose Detection tracking"),
+                if (widget.errors.contains("Form Issues"))
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Form issues detected during the set, focus on controlled movement"),
+
+                //  Pushup errors
+                if (widget.errors.contains("Body not straight"))
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your body in a straight line from head to heels during push-ups"),
+
+                //Lunge errors
+                // if (widget.errors.contains("Torso Lean"))
+                //   _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your torso upright during lunges, avoid leaning forward"),
+                // if (widget.errors.contains("Incorrect Form"))
+                //   _buildReviewItem(Icons.cancel, Colors.redAccent, "Remember to step one leg forward and lunge down, not squat"),
+
+                // Plank errors
+                // if (widget.errors.contains("Hips Too High"))
+                //   _buildReviewItem(Icons.cancel, Colors.redAccent, "Hips were piked too high, bring them down to form a straight line"),
+                // if (widget.errors.contains("Hips Sagging"))
+                //   _buildReviewItem(Icons.cancel, Colors.redAccent, "Hips were sagging down, engage your core to lift them up"),
+
                 const SizedBox(height: 30),
               ],
 
               // Static tips for next set section 
               _buildSectionTitle("Tips for next set"),
-              _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Brace your core and keep a straight line from head to heels. Try not to bend your back"),
-              _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Perform a complete rep with proper form"),
+              // tips change based on the exercise
+              ..._buildExerciseTips(widget.exerciseName),
 
               const SizedBox(height: 40),
 
@@ -212,6 +241,34 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
         ),
       ),
     );
+  }
+
+  // to return summary screen based on exercise
+  List<Widget> _buildExerciseTips(String exerciseName) {
+    switch (exerciseName.toLowerCase()) {
+      case 'pushups':
+        return [
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your core tight and body in a straight line from head to toe"),
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Lower your chest all the way down to get a full range of motion"),
+        ];
+      //   // Add This Later
+      // case 'lunges':
+      //   return [
+      //     _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your front knee directly above your ankle, not pushed past your toes"),
+      //     _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Stay tall with your torso upright throughout the movement"),
+      //   ];
+      //   // Add This later
+      // case 'plank':
+      //   return [
+      //     _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Breathe steadily and squeeze your glutes and abs to maintain the straight line"),
+      //     _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your elbows directly below your shoulders"),
+      //   ];
+      default: // Squats
+        return [
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Brace your core and keep a straight line from head to heels. Try not to bend your back"),
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Perform a complete rep with proper form"),
+        ];
+    }
   }
 
   // Helper widget for section titles

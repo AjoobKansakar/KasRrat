@@ -1,9 +1,8 @@
+// This screen appears automatically afer the User finishes the selected rep range and shows the set summary
 import 'package:flutter/material.dart';
 import '../core/kasrrat_colors.dart';
 import '../routes/app_routes.dart';
 import 'get_ready_screen.dart'; // to navigate back for another set
-
-// This screen appears automatically afer the User finishes the selected rep range
 
 class WorkoutCompleteScreen extends StatefulWidget {
   final String exerciseName;
@@ -153,10 +152,10 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your body in a straight line from head to heels during push-ups"),
 
                 //Lunge errors
-                // if (widget.errors.contains("Torso Lean"))
-                //   _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your torso upright during lunges, avoid leaning forward"),
-                // if (widget.errors.contains("Incorrect Form"))
-                //   _buildReviewItem(Icons.cancel, Colors.redAccent, "Remember to step one leg forward and lunge down, not squat"),
+                if (widget.errors.contains("Torso Lean"))
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your torso upright during lunges, avoid leaning forward"),
+                if (widget.errors.contains("Incorrect Form"))
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Remember to step one leg forward and lunge down, not squat down"),
 
                 // Plank errors
                 // if (widget.errors.contains("Hips Too High"))
@@ -251,12 +250,11 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
           _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your core tight and body in a straight line from head to toe"),
           _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Lower your chest all the way down to get a full range of motion"),
         ];
-      //   // Add This Later
-      // case 'lunges':
-      //   return [
-      //     _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your front knee directly above your ankle, not pushed past your toes"),
-      //     _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Stay tall with your torso upright throughout the movement"),
-      //   ];
+      case 'lunges':
+        return [
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your front knee directly above your ankle, not pushed past your toes"),
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Stay tall with your torso upright throughout the movement"),
+        ];
       //   // Add This later
       // case 'plank':
       //   return [

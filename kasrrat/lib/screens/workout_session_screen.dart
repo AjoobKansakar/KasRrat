@@ -7,10 +7,10 @@ import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import '../logic/pose_detector_service.dart';
 import '../widgets/skeleton_lines.dart'; 
 // Workout Logic Imports
-import '../logic/squat_rep_counter.dart';
+import '../logic/squat_rep_counter.dart';   // Squat logic
 import '../logic/pushup_rep_counter.dart';  // Push-up logic
-// import '../logic/lunge_rep_counter.dart';   // NEW: Lunge logic
-// import '../logic/plank_rep_counter.dart';   // NEW: Plank logic
+import '../logic/lunge_rep_counter.dart';   // Lunge logic
+// import '../logic/plank_rep_counter.dart';   // Plank logic
 // Summary screen import
 import 'workout_complete_screen.dart';
 // TTS Service 
@@ -44,11 +44,12 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   int _frameCount = 0;
 
   // Counters for the exercises
-  // Squat logic
+  // Squat rep counter
   final SquatCounter _squatCounter = SquatCounter();
-  // pushup logic
+  // pushup rep counter
   final PushupCounter _pushupCounter = PushupCounter();
-  // final LungeCounter _lungeCounter = LungeCounter(); // KEEP THIS LATER
+  // Lunge rep counter
+  final LungeCounter _lungeCounter = LungeCounter();
   // final PlankCounter _plankCounter = PlankCounter(); // KEEP THIS LATER
 
   String _currentFeedback = "Aligning...";
@@ -70,7 +71,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   int get _currentReps {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups': return _pushupCounter.reps; // pushup rep counter
-      // case 'lunges':  return _lungeCounter.reps; // KEEP THIS LATER
+      case 'lunges':  return _lungeCounter.reps; // lunge rep counter
       // case 'plank':   return _plankCounter.reps; // KEEP THIS LATER
       default:        return _squatCounter.reps; // defualt squats rep counter
     }
@@ -80,7 +81,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   bool get _currentHasFormError {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups': return _pushupCounter.hasFormError;
-      // case 'lunges':  return _lungeCounter.hasFormError; // KEEP THIS LATER
+      case 'lunges':  return _lungeCounter.hasFormError; 
       // case 'plank':   return _plankCounter.hasFormError; // KEEP THIS LATER
       default:        return _squatCounter.hasFormError;
     }
@@ -213,13 +214,13 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
           onRepCount: () => _ttsService.speak("Good rep!"),
           onFormError: () => _ttsService.speak("Error! Try again"),
         );
-      //   break;
-      // case 'lunges': // KEEP THIS LATER
-      //   _lungeCounter.processPose(
-      //     pose,
-      //     onRepCount: () => _ttsService.speak("Good rep!"),
-      //     onFormError: () => _ttsService.speak("Error! Try again"),
-      //   );
+        break;
+      case 'lunges': 
+        _lungeCounter.processPose(
+          pose,
+          onRepCount: () => _ttsService.speak("Good rep!"),
+          onFormError: () => _ttsService.speak("Error! Try again"),
+        );
       //   break;
       // case 'plank': // KEEP THIS LATER
       //   _plankCounter.processPose(
@@ -241,7 +242,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   String _getActiveFeedback() {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups': return _pushupCounter.feedback;
-      // case 'lunges':  return _lungeCounter.feedback; // KEEP THIS LATER
+      case 'lunges':  return _lungeCounter.feedback; 
       // case 'plank':   return _plankCounter.feedback; // KEEP THIS LATER
       default:        return _squatCounter.feedback;
     }
@@ -251,7 +252,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   Set<String> _getActiveErrors() {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups': return _pushupCounter.errorsFound;
-      // case 'lunges':  return _lungeCounter.errorsFound; // KEEP THIS LATER
+      case 'lunges':  return _lungeCounter.errorsFound;
       // case 'plank':   return _plankCounter.errorsFound; // KEEP THIS LATER
       default:        return _squatCounter.errorsFound;
     }
@@ -261,7 +262,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   int _getActiveTotalAttempts() {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups': return _pushupCounter.totalAttempts;
-      // case 'lunges':  return _lungeCounter.totalAttempts; // KEEP THIS LATER
+      case 'lunges':  return _lungeCounter.totalAttempts; 
       // case 'plank':   return _plankCounter.totalAttempts; // KEEP THIS LATER
       default:        return _squatCounter.totalAttempts;
     }
@@ -271,7 +272,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   int _getActiveGoodReps() {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups': return _pushupCounter.goodReps;
-      // case 'lunges':  return _lungeCounter.goodReps; // KEEP THIS LATER
+      case 'lunges':  return _lungeCounter.goodReps; 
       // case 'plank':   return _plankCounter.goodReps; // KEEP THIS LATER
       default:        return _squatCounter.goodReps;
     }

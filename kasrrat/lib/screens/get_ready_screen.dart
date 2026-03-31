@@ -43,9 +43,11 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
               style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary),
             ),
             const SizedBox(height: 10),
-            const Text("Select how many repetitions you want to perform", 
+            const Text(
+              "Select how many repetitions you want to perform", 
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textGrey, fontSize: 16)),
+              style: TextStyle(color: AppColors.textGrey, fontSize: 16),
+            ),
             
             const SizedBox(height: 40),
 
@@ -68,9 +70,14 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
                       border: Border.all(color: isSelected ? AppColors.primary : Colors.white10),
                     ),
                     child: Center(
-                      child: Text('$rep', 
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, 
-                        color: isSelected ? Colors.black : Colors.white)),
+                      child: Text(
+                        '$rep', 
+                        style: TextStyle(
+                          fontSize: 24, 
+                          fontWeight: FontWeight.bold, 
+                          color: isSelected ? Colors.black : Colors.white
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -99,8 +106,10 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
                     ),
                   );
                 },
-                child: const Text("START SET", 
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+                child: const Text(
+                  "START SET", 
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+                ),
               ),
             ),
             const SizedBox(height: 30),

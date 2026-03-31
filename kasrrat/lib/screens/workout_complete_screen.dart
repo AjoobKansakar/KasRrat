@@ -154,7 +154,7 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
                 if (widget.errors.contains("Elbow Swinging"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your upper arm still, your elbow should not swing forward during the curl"),
                 if (widget.errors.contains("Shallow Curl"))
-                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Curl the weight all the way up so your forearm touches your bicep for full range"),
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Curl all the way up so your forearm touches your bicep for full range"),
 
                 const SizedBox(height: 30),
               ],

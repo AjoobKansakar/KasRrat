@@ -17,7 +17,12 @@ class BicepCurlCounter {
   Set<String> errorsFound = {};
 
   // Bicep curl pose detection logic
-  void processPose(Pose pose, {required Function() onRepCount, required Function() onFormError}) {
+  // onSymmetryError to track simgle arm curls
+  void processPose(Pose pose, {
+    required Function() onRepCount, 
+    required Function() onFormError, 
+    required Function() onSymmetryError // both arms check
+  }) {
 
     // Get all the landmarks needed for bicep curl detection
     final leftShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
@@ -67,7 +72,7 @@ class BicepCurlCounter {
 
     if (isSwinging) {
       feedback = "Keep your elbow still, don't swing!";
-      if (!hasFormError) onFormError(); // Trigger voice once
+      if (!hasFormError) onFormError(); // Trigger tts for form error
       hasFormError = true;
       repHadError = true; // Persistent memory to save that the elbow swung during the rep
       errorsFound.add("Elbow Swinging"); // Record the error type
@@ -82,6 +87,7 @@ class BicepCurlCounter {
     // Check for asymmetry curl
     if ((leftElbowAngle < 60 && rightElbowAngle > 100) || (rightElbowAngle < 60 && leftElbowAngle > 100)) {
       feedback = "Curl both arms together!";
+      if (!hasFormError) onSymmetryError(); // Trigger tts for single arm curl error
       hasFormError = true;
       repHadError = true;
       errorsFound.add("Form Issues");

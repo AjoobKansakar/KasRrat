@@ -7,7 +7,7 @@ import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import '../logic/pose_detector_service.dart';
 import '../widgets/skeleton_lines.dart'; 
 // Workout Logic Imports
-import '../logic/squat_rep_counter.dart';   // Squat logic
+import '../logic/squat_rep_counter.dart';   // Squats logic 
 import '../logic/pushup_rep_counter.dart';  // Push-up logic
 import '../logic/lunge_rep_counter.dart';   // Lunge logic
 import '../logic/bicep_curl_counter.dart';  // Bicep Curl logic
@@ -161,15 +161,28 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         if (results.isNotEmpty) {
           final pose = results.first;
 
-          // every landmarks should be visible for the workout to start
-          final requiredLandmarks = [
-            PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder, // shoulder
-            PoseLandmarkType.leftHip, PoseLandmarkType.rightHip,  // hip
-            PoseLandmarkType.leftKnee, PoseLandmarkType.rightKnee,  // knee
-            PoseLandmarkType.leftAnkle, PoseLandmarkType.rightAnkle, // Ankles
-          ];
+          // Dynamic landmark detection to start the workout
+          List<PoseLandmarkType> requiredLandmarks;
+          
+          // for Bicep curls we only need the upper body
+          if (widget.exerciseName.toLowerCase() == 'bicep curls') {
+            requiredLandmarks = [
+              PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder,
+              PoseLandmarkType.leftHip, PoseLandmarkType.rightHip,
+              PoseLandmarkType.leftElbow, PoseLandmarkType.rightElbow,
+              PoseLandmarkType.leftWrist, PoseLandmarkType.rightWrist,
+            ];
+          } else {
+            // Standard full body check for Squats, Pushups, Lunges
+            requiredLandmarks = [
+              PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder,
+              PoseLandmarkType.leftHip, PoseLandmarkType.rightHip,
+              PoseLandmarkType.leftKnee, PoseLandmarkType.rightKnee,
+              PoseLandmarkType.leftAnkle, PoseLandmarkType.rightAnkle,
+            ];
+          }
 
-          // Check if every landmark is visible with high confidence (> 0.7)
+          // Check if every landmark in our list is visible with high confidence (> 0.7)
           bodyOk = requiredLandmarks.every((type) => (pose.landmarks[type]?.likelihood ?? 0) > 0.7);
 
           // only run exercise logic if the user is fully in the frame
@@ -187,7 +200,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
             if (_sessionStarted) _currentFeedback = _getActiveFeedback();
 
             // Auto start trigger 
-            // Only start countdown if the full body with landmarks is detected clearly
+            // Only start countdown if the required landmarks are detected clearly
             if (bodyOk && lightOk && !_sessionStarted && !_isCountingDown) {
               _startAutoCountdown();
             }
@@ -227,7 +240,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         _bicepCurlCounter.processPose(
           pose,
           onRepCount: () => _ttsService.speak("Good rep!"),
-          onFormError: () => _ttsService.speak("Error! Keep your elbow still"),
+          // Elbow swinging error
+          onFormError: () => _ttsService.speak("Try again! Keep your elbows in a fixed position"),
+          // Only one arm used error
+          onSymmetryError: () => _ttsService.speak("Use both arms while curling"),
         );
         break;
       default:
@@ -281,36 +297,27 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   // auto start countdown function
   void _startAutoCountdown() async {
-      _isCountingDown = true;
-      for (int i = 5; i > 0; i--) { // 5 second countdown
-        // If the user moves out of frame during the 5 seconds, reset the timer
-        // ensures the workout only starts when the user is fully visible
-        if (!mounted || !_isBodyInFrame || !_isLightingGood) {
-          setState(() {
-            _isCountingDown = false;
-            _countdown = 5; 
-          });
-          return; 
-        }
-        
-        setState(() => _countdown = i);
-        await Future.delayed(const Duration(seconds: 1));
-      }
-
-      // Double check one last time before starting
-      if (mounted && _isBodyInFrame && _isLightingGood) {
-        setState(() {
-          _sessionStarted = true;
-          _isCountingDown = false;
-        });
-      } else if (mounted) {
-        // If user moved out at the last second
+    _isCountingDown = true;
+    for (int i = 5; i > 0; i--) { // 5 second countdown
+      // If the user moves out of frame during the 5 seconds, cancel
+      if (!mounted || !_isBodyInFrame || !_isLightingGood) {
         setState(() {
           _isCountingDown = false;
-          _countdown = 5;
+          _countdown = 5; 
         });
+        return; 
       }
+      setState(() => _countdown = i);
+      await Future.delayed(const Duration(seconds: 1));
     }
+
+    if (mounted && _isBodyInFrame && _isLightingGood) {
+      setState(() {
+        _sessionStarted = true;
+        _isCountingDown = false;
+      });
+    }
+  }
 
   // Recording data for summary
   void _onWorkoutFinished() {
@@ -451,7 +458,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildCheckChip("Full Body", _isBodyInFrame),
+                      _buildCheckChip(
+                        widget.exerciseName.toLowerCase() == 'bicep curls' ? "Upper Body" : "Full Body", 
+                        _isBodyInFrame
+                      ),
                       const SizedBox(width: 10),
                       _buildCheckChip("Lighting", _isLightingGood),
                     ],
@@ -510,7 +520,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          (_isBodyInFrame && _isLightingGood) ? "STABILIZING..." : "POSITION FULL BODY", 
+                          (_isBodyInFrame && _isLightingGood) ? "STABILIZING..." : "POSITION YOUR BODY", 
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
                         ),
                       ),

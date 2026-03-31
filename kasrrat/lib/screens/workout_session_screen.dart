@@ -10,7 +10,7 @@ import '../widgets/skeleton_lines.dart';
 import '../logic/squat_rep_counter.dart';   // Squat logic
 import '../logic/pushup_rep_counter.dart';  // Push-up logic
 import '../logic/lunge_rep_counter.dart';   // Lunge logic
-// import '../logic/plank_rep_counter.dart';   // Plank logic
+import '../logic/bicep_curl_counter.dart';  // Bicep Curl logic
 // Summary screen import
 import 'workout_complete_screen.dart';
 // TTS Service 
@@ -50,7 +50,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   final PushupCounter _pushupCounter = PushupCounter();
   // Lunge rep counter
   final LungeCounter _lungeCounter = LungeCounter();
-  // final PlankCounter _plankCounter = PlankCounter(); // KEEP THIS LATER
+  // Bicep Curl rep counter 
+  final BicepCurlCounter _bicepCurlCounter = BicepCurlCounter();
 
   String _currentFeedback = "Aligning...";
   bool _workoutCompleted = false;
@@ -70,20 +71,20 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   // Helper to get the active exercise rep count, routes counter depending on which exercise is currently active
   int get _currentReps {
     switch (widget.exerciseName.toLowerCase()) {
-      case 'pushups': return _pushupCounter.reps; // pushup rep counter
-      case 'lunges':  return _lungeCounter.reps; // lunge rep counter
-      // case 'plank':   return _plankCounter.reps; // KEEP THIS LATER
-      default:        return _squatCounter.reps; // defualt squats rep counter
+      case 'pushups':     return _pushupCounter.reps;    // pushup rep counter
+      case 'lunges':      return _lungeCounter.reps;     // lunge rep counter
+      case 'bicep curls': return _bicepCurlCounter.reps; // bicep curl rep counter
+      default:            return _squatCounter.reps;     // default squats rep counter
     }
   }
 
-  // Helper to get the active exerise form error state, used to trigger the red screen overlay
+  // Helper to get the active exercise form error state, used to trigger the red screen overlay
   bool get _currentHasFormError {
     switch (widget.exerciseName.toLowerCase()) {
-      case 'pushups': return _pushupCounter.hasFormError;
-      case 'lunges':  return _lungeCounter.hasFormError; 
-      // case 'plank':   return _plankCounter.hasFormError; // KEEP THIS LATER
-      default:        return _squatCounter.hasFormError;
+      case 'pushups':     return _pushupCounter.hasFormError;
+      case 'lunges':      return _lungeCounter.hasFormError;
+      case 'bicep curls': return _bicepCurlCounter.hasFormError;
+      default:            return _squatCounter.hasFormError;
     }
   }
 
@@ -221,14 +222,14 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
           onRepCount: () => _ttsService.speak("Good rep!"),
           onFormError: () => _ttsService.speak("Error! Try again"),
         );
-      //   break;
-      // case 'plank': // KEEP THIS LATER
-      //   _plankCounter.processPose(
-      //     pose,
-      //     onRepCount: () => _ttsService.speak("Keep going!"),
-      //     onFormError: () => _ttsService.speak("Fix your form"),
-      //   );
-      //   break;
+        break;
+      case 'bicep curls': 
+        _bicepCurlCounter.processPose(
+          pose,
+          onRepCount: () => _ttsService.speak("Good rep!"),
+          onFormError: () => _ttsService.speak("Error! Keep your elbow still"),
+        );
+        break;
       default:
         _squatCounter.processPose(
           pose,
@@ -241,66 +242,75 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   // return feedback text from the active counter
   String _getActiveFeedback() {
     switch (widget.exerciseName.toLowerCase()) {
-      case 'pushups': return _pushupCounter.feedback;
-      case 'lunges':  return _lungeCounter.feedback; 
-      // case 'plank':   return _plankCounter.feedback; // KEEP THIS LATER
-      default:        return _squatCounter.feedback;
+      case 'pushups':     return _pushupCounter.feedback;
+      case 'lunges':      return _lungeCounter.feedback;
+      case 'bicep curls': return _bicepCurlCounter.feedback; 
+      default:            return _squatCounter.feedback;
     }
   }
 
   // return error set from the active counter, used to build WorkoutCompleteScreen review
   Set<String> _getActiveErrors() {
     switch (widget.exerciseName.toLowerCase()) {
-      case 'pushups': return _pushupCounter.errorsFound;
-      case 'lunges':  return _lungeCounter.errorsFound;
-      // case 'plank':   return _plankCounter.errorsFound; // KEEP THIS LATER
-      default:        return _squatCounter.errorsFound;
+      case 'pushups':     return _pushupCounter.errorsFound;
+      case 'lunges':      return _lungeCounter.errorsFound;
+      case 'bicep curls': return _bicepCurlCounter.errorsFound; 
+      default:            return _squatCounter.errorsFound;
     }
   }
 
   // returns totalAttempts from the active counter
   int _getActiveTotalAttempts() {
     switch (widget.exerciseName.toLowerCase()) {
-      case 'pushups': return _pushupCounter.totalAttempts;
-      case 'lunges':  return _lungeCounter.totalAttempts; 
-      // case 'plank':   return _plankCounter.totalAttempts; // KEEP THIS LATER
-      default:        return _squatCounter.totalAttempts;
+      case 'pushups':     return _pushupCounter.totalAttempts;
+      case 'lunges':      return _lungeCounter.totalAttempts;
+      case 'bicep curls': return _bicepCurlCounter.totalAttempts; 
+      default:            return _squatCounter.totalAttempts;
     }
   }
 
   // returns goodreps from the active counter
   int _getActiveGoodReps() {
     switch (widget.exerciseName.toLowerCase()) {
-      case 'pushups': return _pushupCounter.goodReps;
-      case 'lunges':  return _lungeCounter.goodReps; 
-      // case 'plank':   return _plankCounter.goodReps; // KEEP THIS LATER
-      default:        return _squatCounter.goodReps;
+      case 'pushups':     return _pushupCounter.goodReps;
+      case 'lunges':      return _lungeCounter.goodReps;
+      case 'bicep curls': return _bicepCurlCounter.goodReps; 
+      default:            return _squatCounter.goodReps;
     }
   }
 
   // auto start countdown function
   void _startAutoCountdown() async {
-    _isCountingDown = true;
-    for (int i = 5; i > 0; i--) { // 5 second countdown
-      // If the user moves out of frame during the 5 seconds, cancel
-      if (!mounted || !_isBodyInFrame || !_isLightingGood) {
+      _isCountingDown = true;
+      for (int i = 5; i > 0; i--) { // 5 second countdown
+        // If the user moves out of frame during the 5 seconds, reset the timer
+        // ensures the workout only starts when the user is fully visible
+        if (!mounted || !_isBodyInFrame || !_isLightingGood) {
+          setState(() {
+            _isCountingDown = false;
+            _countdown = 5; 
+          });
+          return; 
+        }
+        
+        setState(() => _countdown = i);
+        await Future.delayed(const Duration(seconds: 1));
+      }
+
+      // Double check one last time before starting
+      if (mounted && _isBodyInFrame && _isLightingGood) {
+        setState(() {
+          _sessionStarted = true;
+          _isCountingDown = false;
+        });
+      } else if (mounted) {
+        // If user moved out at the last second
         setState(() {
           _isCountingDown = false;
-          _countdown = 5; 
+          _countdown = 5;
         });
-        return; 
       }
-      setState(() => _countdown = i);
-      await Future.delayed(const Duration(seconds: 1));
     }
-
-    if (mounted && _isBodyInFrame && _isLightingGood) {
-      setState(() {
-        _sessionStarted = true;
-        _isCountingDown = false;
-      });
-    }
-  }
 
   // Recording data for summary
   void _onWorkoutFinished() {
@@ -484,12 +494,9 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                       padding: const EdgeInsets.all(15),
                       width: double.infinity,
                       decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20)),
-                      // changinf label from reps to secs for plank 
                       child: Center(child: Text(
-                        widget.exerciseName.toLowerCase() == 'plank'
-                          ? "SECONDS: $_currentReps / ${widget.targetReps}"
-                          : "REPITITIONS: $_currentReps / ${widget.targetReps}",
-                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+                        "REPs: $_currentReps / ${widget.targetReps}",
+                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black),
                       )),
                     )
                   // Show Status bar when not started

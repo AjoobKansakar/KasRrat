@@ -62,9 +62,6 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
     // Calculate a score out of 100 based on form quality
     int score = widget.repsCompleted == 0 ? 0 : ((widget.goodReps / widget.repsCompleted) * 100).toInt();
 
-    // Change from Reps to Seconfs for Planks
-    // bool isPlank = widget.exerciseName.toLowerCase() == 'plank';
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -122,14 +119,10 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
 
               // What went well section
               _buildSectionTitle("What went well"),
-
-              // Seconds label for Plank
-              // _buildReviewItem(Icons.check_circle, Colors.tealAccent,
-              //   isPlank
-              //     ? "Held for ${widget.repsCompleted} seconds"
-              //     : "Completed ${widget.repsCompleted} total reps"),
-              // if (score > 70) _buildReviewItem(Icons.check_circle, Colors.tealAccent, "Maintained great form throughout"),
-              // _buildReviewItem(Icons.check_circle, Colors.tealAccent, "Camera view stayed clear"),
+              _buildReviewItem(Icons.check_circle, Colors.tealAccent,
+                "Completed ${widget.repsCompleted} total reps"),
+              if (score > 70) _buildReviewItem(Icons.check_circle, Colors.tealAccent, "Maintained great form throughout"),
+              _buildReviewItem(Icons.check_circle, Colors.tealAccent, "Camera view stayed clear"),
 
               const SizedBox(height: 30),
 
@@ -140,28 +133,28 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
                 // Squats errors
                 if (widget.errors.contains("Back Bending"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Back rounds up at the bottom, keep the back straigth as possible"),
-                // if (widget.errors.contains("Shallow Depth") && !isPlank)  // Add this later for planks
+                if (widget.errors.contains("Shallow Depth"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Range of motion was too short, go deeper"),
                 if (widget.errors.contains("Stand sideways"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Body was not in the ideal positioning for Pose Detection tracking"),
                 if (widget.errors.contains("Form Issues"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Form issues detected during the set, focus on controlled movement"),
 
-                //  Pushup errors
+                // Pushup errors
                 if (widget.errors.contains("Body not straight"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your body in a straight line from head to heels during push-ups"),
 
-                //Lunge errors
+                // Lunge errors
                 if (widget.errors.contains("Torso Lean"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your torso upright during lunges, avoid leaning forward"),
                 if (widget.errors.contains("Incorrect Form"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Remember to step one leg forward and lunge down, not squat down"),
 
-                // Plank errors
-                // if (widget.errors.contains("Hips Too High"))
-                //   _buildReviewItem(Icons.cancel, Colors.redAccent, "Hips were piked too high, bring them down to form a straight line"),
-                // if (widget.errors.contains("Hips Sagging"))
-                //   _buildReviewItem(Icons.cancel, Colors.redAccent, "Hips were sagging down, engage your core to lift them up"),
+                // Bicep Curl
+                if (widget.errors.contains("Elbow Swinging"))
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your upper arm still, your elbow should not swing forward during the curl"),
+                if (widget.errors.contains("Shallow Curl"))
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Curl the weight all the way up so your forearm touches your bicep for full range"),
 
                 const SizedBox(height: 30),
               ],
@@ -255,12 +248,11 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
           _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your front knee directly above your ankle, not pushed past your toes"),
           _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Stay tall with your torso upright throughout the movement"),
         ];
-      //   // Add This later
-      // case 'plank':
-      //   return [
-      //     _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Breathe steadily and squeeze your glutes and abs to maintain the straight line"),
-      //     _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your elbows directly below your shoulders"),
-      //   ];
+      case 'bicep curls': 
+        return [
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Pin your elbows to your sides throughout the entire movement"),
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Curl all the way up and lower slowly for maximum muscle engagement"),
+        ];
       default: // Squats
         return [
           _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Brace your core and keep a straight line from head to heels. Try not to bend your back"),

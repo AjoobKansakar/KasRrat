@@ -150,11 +150,19 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
                 if (widget.errors.contains("Incorrect Form"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Remember to step one leg forward and lunge down, not squat down"),
 
-                // Bicep Curl
+                // Bicep Curl errors
                 if (widget.errors.contains("Elbow Swinging"))
                   _buildReviewItem(Icons.cancel, Colors.redAccent, "Keep your upper arm still, your elbow should not swing forward during the curl"),
                 if (widget.errors.contains("Shallow Curl"))
-                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Curl all the way up so your forearm touches your bicep for full range"),
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Curl the weight all the way up so your forearm touches your bicep for full range"),
+
+                // Lateral Raise errors
+                if (widget.errors.contains("Standing sideways"))
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Face directly infront of the camera for Lateral Raises so the AI can see arm height"),
+                if (widget.errors.contains("Asymmetric Raise"))
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "One arm was raised higher than the other, focus on lifting evenly"),
+                if (widget.errors.contains("Shallow Raise"))
+                  _buildReviewItem(Icons.cancel, Colors.redAccent, "Arms did not reach shoulder height, increase your range of motion"),
 
                 const SizedBox(height: 30),
               ],
@@ -243,15 +251,17 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
           _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your core tight and body in a straight line from head to toe"),
           _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Lower your chest all the way down to get a full range of motion"),
         ];
-      case 'lunges':
-        return [
-          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Keep your front knee directly above your ankle, not pushed past your toes"),
-          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Stay tall with your torso upright throughout the movement"),
-        ];
       case 'bicep curls': 
         return [
           _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Pin your elbows to your sides throughout the entire movement"),
           _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Curl all the way up and lower slowly for maximum muscle engagement"),
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Pro tip: Twist your biceps in-wards using you pinky finger"),
+        ];
+      case 'lateral raises': 
+        return [
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Raise your arms until they are parallel to the floor till yout shoulder height"),
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Avoid swinging your body, use your shoulders to lift the weight"),
+          _buildReviewItem(Icons.lightbulb, Colors.yellowAccent, "Pro tip: Imagine your pouring a glass of water"),
         ];
       default: // Squats
         return [

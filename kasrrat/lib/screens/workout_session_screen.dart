@@ -9,7 +9,7 @@ import '../widgets/skeleton_lines.dart';
 // Workout Logic Imports
 import '../logic/squat_rep_counter.dart';   // Squats logic 
 import '../logic/pushup_rep_counter.dart';  // Push-up logic
-import '../logic/lunge_rep_counter.dart';   // Lunge logic
+import '../logic/lateral_raise_counter.dart';   // Lateral raise logic
 import '../logic/bicep_curl_counter.dart';  // Bicep Curl logic
 // Summary screen import
 import 'workout_complete_screen.dart';
@@ -48,8 +48,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   final SquatCounter _squatCounter = SquatCounter();
   // pushup rep counter
   final PushupCounter _pushupCounter = PushupCounter();
-  // Lunge rep counter
-  final LungeCounter _lungeCounter = LungeCounter();
+  // Latearl Raises rep counter
+  final LateralRaiseCounter _lateralRaiseCounter = LateralRaiseCounter();
   // Bicep Curl rep counter 
   final BicepCurlCounter _bicepCurlCounter = BicepCurlCounter();
 
@@ -72,7 +72,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   int get _currentReps {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups':     return _pushupCounter.reps;    // pushup rep counter
-      case 'lunges':      return _lungeCounter.reps;     // lunge rep counter
+       case 'lateral raises': return _lateralRaiseCounter.reps;    // lateral Raises rep counter
       case 'bicep curls': return _bicepCurlCounter.reps; // bicep curl rep counter
       default:            return _squatCounter.reps;     // default squats rep counter
     }
@@ -82,7 +82,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   bool get _currentHasFormError {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups':     return _pushupCounter.hasFormError;
-      case 'lunges':      return _lungeCounter.hasFormError;
+      case 'lateral raises': return _lateralRaiseCounter.hasFormError;
       case 'bicep curls': return _bicepCurlCounter.hasFormError;
       default:            return _squatCounter.hasFormError;
     }
@@ -164,16 +164,16 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
           // Dynamic landmark detection to start the workout
           List<PoseLandmarkType> requiredLandmarks;
           
-          // for Bicep curls we only need the upper body
-          if (widget.exerciseName.toLowerCase() == 'bicep curls') {
+          // Bicep Curls and Lateral Raises only need upper body
+          String name = widget.exerciseName.toLowerCase();
+          if (name == 'bicep curls' || name == 'lateral raises') {
             requiredLandmarks = [
               PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder,
               PoseLandmarkType.leftHip, PoseLandmarkType.rightHip,
               PoseLandmarkType.leftElbow, PoseLandmarkType.rightElbow,
-              PoseLandmarkType.leftWrist, PoseLandmarkType.rightWrist,
             ];
           } else {
-            // Standard full body check for Squats, Pushups, Lunges
+            // Full body check for Squats and Pushup
             requiredLandmarks = [
               PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder,
               PoseLandmarkType.leftHip, PoseLandmarkType.rightHip,
@@ -181,14 +181,12 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
               PoseLandmarkType.leftAnkle, PoseLandmarkType.rightAnkle,
             ];
           }
-
-          // Check if every landmark in our list is visible with high confidence (> 0.7)
+          // check if every landmark is visible with high confidence (> 0.7)
           bodyOk = requiredLandmarks.every((type) => (pose.landmarks[type]?.likelihood ?? 0) > 0.7);
-
-          // only run exercise logic if the user is fully in the frame
+          // only start the rep count if the user landmarks are fulling in the frame
           if (_sessionStarted) {
-            // routing the pose to the correct counter based on exersie name
-            _routePoseToCounter(pose); // processPose() is same for all the counters
+            // routing the pose to correct counter based on exercise name
+            _routePoseToCounter(pose);  // processPose() is the same for all the counter
           }
         }
 
@@ -199,8 +197,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
             _poses = results;
             if (_sessionStarted) _currentFeedback = _getActiveFeedback();
 
-            // Auto start trigger 
-            // Only start countdown if the required landmarks are detected clearly
+            // auto start countdown if the required landmarks are visible
             if (bodyOk && lightOk && !_sessionStarted && !_isCountingDown) {
               _startAutoCountdown();
             }
@@ -229,11 +226,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
           onFormError: () => _ttsService.speak("Error! Try again"),
         );
         break;
-      case 'lunges': 
-        _lungeCounter.processPose(
-          pose,
+      case 'lateral raises':
+        _lateralRaiseCounter.processPose(pose,
           onRepCount: () => _ttsService.speak("Good rep!"),
-          onFormError: () => _ttsService.speak("Error! Try again"),
+          onFormError: () => _ttsService.speak("Face the camera and raise your arms evenly"),
         );
         break;
       case 'bicep curls': 
@@ -259,7 +255,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   String _getActiveFeedback() {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups':     return _pushupCounter.feedback;
-      case 'lunges':      return _lungeCounter.feedback;
+      case 'lateral raises': return _lateralRaiseCounter.feedback;
       case 'bicep curls': return _bicepCurlCounter.feedback; 
       default:            return _squatCounter.feedback;
     }
@@ -269,7 +265,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   Set<String> _getActiveErrors() {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups':     return _pushupCounter.errorsFound;
-      case 'lunges':      return _lungeCounter.errorsFound;
+      case 'lateral raises': return _lateralRaiseCounter.errorsFound;
       case 'bicep curls': return _bicepCurlCounter.errorsFound; 
       default:            return _squatCounter.errorsFound;
     }
@@ -279,7 +275,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   int _getActiveTotalAttempts() {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups':     return _pushupCounter.totalAttempts;
-      case 'lunges':      return _lungeCounter.totalAttempts;
+      case 'lateral raises': return _lateralRaiseCounter.totalAttempts;
       case 'bicep curls': return _bicepCurlCounter.totalAttempts; 
       default:            return _squatCounter.totalAttempts;
     }
@@ -289,7 +285,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   int _getActiveGoodReps() {
     switch (widget.exerciseName.toLowerCase()) {
       case 'pushups':     return _pushupCounter.goodReps;
-      case 'lunges':      return _lungeCounter.goodReps;
+      case 'lateral raises': return _lateralRaiseCounter.goodReps;
       case 'bicep curls': return _bicepCurlCounter.goodReps; 
       default:            return _squatCounter.goodReps;
     }

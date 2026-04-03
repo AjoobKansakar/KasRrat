@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; 
 import '../core/kasrrat_colors.dart';
-import 'get_ready_screen.dart'; // navigate to GetReadyScreen when clicked on the exercise card
-
+// Navigation from exercise card to GetReadyScreen
+import 'get_ready_screen.dart';  
+// Video Guide import
+import '../widgets/video_guide_card.dart'; 
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -38,7 +40,6 @@ class HomeScreen extends StatelessWidget {
                 color: AppColors.surfaceGrey,
                 borderRadius: BorderRadius.circular(20),
               ),
-              // user's progress data Static for now
               child: Column(
                 children: [
                   const Text("Today's Progress", style: TextStyle(color: AppColors.textGrey)),
@@ -51,7 +52,7 @@ class HomeScreen extends StatelessWidget {
             ),
             
             const SizedBox(height: 30),
-            const Text("Choose Your Workout", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text("Choose your workout for today", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
 
             // Workout Grid
@@ -62,13 +63,37 @@ class HomeScreen extends StatelessWidget {
               crossAxisSpacing: 15,
               mainAxisSpacing: 15,
               children: [
-                // Static UI card for now
-                _workoutCard(context, "Squats", Icons.airline_seat_legroom_extra, "12 Sets"),
-                _workoutCard(context, "Pushups", Icons.fitness_center, "8 Sets"),
-                _workoutCard(context, "Lunges", Icons.directions_run, "5 Sets"),
-                _workoutCard(context, "Bicep Curls", Icons.accessibility_new, "10 Sets"),
+                // adding Icons images to the exercise cards
+                _workoutCard(context, "Squats", "assets/icons/Squats_icon.png"),
+                _workoutCard(context, "Pushups", "assets/icons/PushUp_icon.png"),
+                _workoutCard(context, "Lateral Raises", "assets/icons/LateralRaises_icon.png"),
+                _workoutCard(context, "Bicep Curls", "assets/icons/BicepsCurls_icon.png"),
               ],
-            )
+            ),
+            const SizedBox(height: 40),
+            
+            // Video Tutorial guide
+            const Text("Guide on how to perform correct form", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            
+            // Horizontal scroll for videos
+            SizedBox(
+              height: 220, 
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+              // Videos for each exercises
+                children: const [
+                  VideoGuideCard(title: "Perfect Squat", videoPath: "assets/videos/Squats_video.mp4"),
+                  SizedBox(width: 15),
+                  VideoGuideCard(title: "Proper Pushup", videoPath: "assets/videos/Pushup_video2.mp4"),
+                  SizedBox(width: 15),
+                  VideoGuideCard(title: "Perfect lateral raises", videoPath: "assets/videos/LateralRaises_video.mp4"),
+                  SizedBox(width: 15),
+                  VideoGuideCard(title: "Perfect biceps curls", videoPath: "assets/videos/BicepsCurls_video.mp4"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -76,10 +101,10 @@ class HomeScreen extends StatelessWidget {
   }
 
   // workout card build function
-  Widget _workoutCard(BuildContext context, String title, IconData icon, String subtitle) {
+  // ImagePath parameter
+  Widget _workoutCard(BuildContext context, String title, String imagePath) {
     return GestureDetector(
       onTap: () {
-        // Navigate to GetReadyScreen first --> select rep range --> when requirements to start the set is matched auto-navigate to WorkoutSessionScreen
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -95,10 +120,20 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: AppColors.primary, size: 40),
-            const SizedBox(height: 10),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text(subtitle, style: const TextStyle(color: AppColors.textGrey, fontSize: 12)),
+            // Using Image.asset to display images
+            Image.asset(
+              imagePath,
+              width: 60, // icon size
+              height: 60,
+              // icon color
+              color: AppColors.primary, 
+              colorBlendMode: BlendMode.srcIn,
+            ),
+            const SizedBox(height: 15),
+            Text(
+              title, 
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+            ),
           ],
         ),
       ),

@@ -3,8 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/kasrrat_colors.dart';
 // Navigation from exercise card to GetReadyScreen
 import 'get_ready_screen.dart';  
-// Video Guide import
-import '../widgets/video_guide_card.dart'; 
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -70,30 +68,8 @@ class HomeScreen extends StatelessWidget {
                 _workoutCard(context, "Bicep Curls", "assets/icons/BicepsCurls_icon.png"),
               ],
             ),
-            const SizedBox(height: 40),
-            
-            // Video Tutorial guide
-            const Text("Guide on how to perform correct form", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            
-            // Horizontal scroll for videos
-            SizedBox(
-              height: 220, 
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-              // Videos for each exercises
-                children: const [
-                  VideoGuideCard(title: "Perfect Squat", videoPath: "assets/videos/Squats_video.mp4"),
-                  SizedBox(width: 15),
-                  VideoGuideCard(title: "Proper Pushup", videoPath: "assets/videos/Pushup_video2.mp4"),
-                  SizedBox(width: 15),
-                  VideoGuideCard(title: "Perfect lateral raises", videoPath: "assets/videos/LateralRaises_video.mp4"),
-                  SizedBox(width: 15),
-                  VideoGuideCard(title: "Perfect biceps curls", videoPath: "assets/videos/BicepsCurls_video.mp4"),
-                ],
-              ),
-            ),
             const SizedBox(height: 30),
+            // Video Tutorial guide has been moved to the individual GetReadyScreen for each exercise.
           ],
         ),
       ),
@@ -105,6 +81,7 @@ class HomeScreen extends StatelessWidget {
   Widget _workoutCard(BuildContext context, String title, String imagePath) {
     return GestureDetector(
       onTap: () {
+        // Navigation layout
         Navigator.push(
           context,
           MaterialPageRoute(

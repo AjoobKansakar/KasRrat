@@ -18,7 +18,7 @@ class _VideoGuideCardState extends State<VideoGuideCard> {
   @override
   void initState() {
     super.initState();
-    // 1. Initialize the controller
+    // controller initialization
     _controller = VideoPlayerController.asset(widget.videoPath)
       ..initialize().then((_) {
         setState(() {}); // Show video once loaded
@@ -28,7 +28,7 @@ class _VideoGuideCardState extends State<VideoGuideCard> {
 
   @override
   void dispose() {
-    // 2. CRITICAL: Dispose to save phone memory
+    // Dispose to save phone memory
     _controller.dispose();
     super.dispose();
   }

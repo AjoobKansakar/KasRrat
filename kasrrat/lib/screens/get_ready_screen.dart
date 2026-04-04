@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/kasrrat_colors.dart';
 import 'workout_session_screen.dart';
+// video card import
+import '../widgets/video_guide_card.dart'; 
 
 // Screen to select the desired Rep range for the exercise
 class GetReadyScreen extends StatefulWidget {
@@ -59,8 +61,8 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
             ),
             const SizedBox(height: 30),
 
-            // Exercise Manual
-            _buildSectionHeader("Exercise Manual"),
+            // Exercise Manual section
+            _buildSectionHeader("Exercise Manual:"),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -81,8 +83,8 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
 
             const SizedBox(height: 25),
 
-            // Rep count rules
-            _buildSectionHeader("Rep count rules"),
+            // Rep count rules section
+            _buildSectionHeader("Rules:"),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -119,6 +121,19 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
                     ),
                   );
                 }).toList(),
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // video guide section
+            _buildSectionHeader("Form Demonstration:"),
+            const SizedBox(height: 10),
+            // This displays the video specific to the exercise
+            Center(
+              child: VideoGuideCard(
+                title: "${widget.exerciseName} Tutorial", 
+                videoPath: manualData['video']!,
               ),
             ),
 
@@ -231,12 +246,13 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
     );
   }
 
-  // all exercise manual
+  // cards for manual, rules, and tutorial
   Map<String, dynamic> _getExerciseManual(String name) {
     switch (name.toLowerCase()) {
       // For Squats
       case 'squats':
         return {
+          'video': "assets/videos/Squats_video.mp4",
           'manual':
               "Stand with feet shoulder-width apart. Keep your back straight. Slowly bend your knees and hips, go down maintaining straight back, keeping your weight balanced on both legs. Stand back up to the starting position keeping you back straight throughout the movement.",
           'rules': [
@@ -252,6 +268,7 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
       // For pushups
       case 'pushups':
         return {
+          'video': "assets/videos/Pushup_video2.mp4",
           'manual':
               "Start in a high plank position. Place your hand under your shoulders. Keep your body in a straight line. Lower your body until your chest nearly touches the floor bending your elbows, keeping your elbows at a 45° angle. Go down until elbows are around 90°. Push back up until arms are straight again.",
           'rules': [
@@ -266,6 +283,7 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
       // for biceps curls
       case 'bicep curls':
         return {
+          'video': "assets/videos/BicepsCurls_video.mp4",
           'manual':
               "Stand tall with arms at your sides. Keeping your elbows pinned to your ribs, start with arms fully extended then curl both the arms upwards toward your shoulders. Keep in mind not to move your elbows during the movement keep them in a fix position. Slowly lower your arms back to the start position.",
           'rules': [
@@ -280,6 +298,7 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
       // for lateral raises 
       case 'lateral raises':
         return {
+          'video': "assets/videos/LateralRaises_video.mp4",
           'manual':
               "Hold weights at your sides of your hips, with a slight bend in elbows. Lift both arms outwards to your sides until they are parallel to the floor, until arms reach shoulder height. Lower them back down. control the weight throughout the movement",
           'rules': [
@@ -293,6 +312,7 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
         };
       default:
         return {
+          'video': "assets/videos/Squats_video.mp4",
           'manual': "Align yourself and follow instructions.",
           'rules': ["Full body in frame"],
         };

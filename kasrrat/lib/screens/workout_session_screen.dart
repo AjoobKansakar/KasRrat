@@ -17,6 +17,8 @@ import 'workout_complete_screen.dart';
 import '../logic/tts_service.dart'; 
 // import for WriteBuffer
 import 'dart:typed_data'; // memory management using ByteData
+// Supabase connection
+import 'package:supabase_flutter/supabase_flutter.dart'; 
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String exerciseName;
@@ -316,22 +318,40 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   }
 
   // Recording data for summary
-  void _onWorkoutFinished() {
+  Future<void> _onWorkoutFinished() async {
+    // Stop camera first to release hardware resources
     if (_controller != null && _controller!.value.isStreamingImages) {
-      _controller?.stopImageStream();
+      await _controller?.stopImageStream();
     }
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WorkoutCompleteScreen(
-          exerciseName: widget.exerciseName,
-          repsCompleted: _currentReps,                  // to show the valid rep counted
-          totalReps: _getActiveTotalAttempts(),         // to show how many rep user tried
-          goodReps: _getActiveGoodReps(),               // to store good reps
-          errors: _getActiveErrors(),                   // to store the error during the workout
+    // Save data to supabase allowing home page to calculate Daily Streaks
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        await Supabase.instance.client.from('workout_sessions').insert({
+          'user_id': user.id,
+          'exercise_name': widget.exerciseName,
+          'reps_completed': _currentReps,
+        });
+      }
+    } catch (e) {
+      debugPrint("Error saving session to Supabase: $e");
+    }
+
+    // summary screen navigation
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WorkoutCompleteScreen(
+            exerciseName: widget.exerciseName,
+            repsCompleted: _currentReps,                  // to show the valid rep counted
+            totalReps: _getActiveTotalAttempts(),         // to show how many rep user tried
+            goodReps: _getActiveGoodReps(),               // to store good reps
+            errors: _getActiveErrors(),                   // to store the error during the workout
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   // helper function to convert raw camera format to AI format

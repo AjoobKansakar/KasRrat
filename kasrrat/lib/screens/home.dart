@@ -4,8 +4,66 @@ import '../core/kasrrat_colors.dart';
 // Navigation from exercise card to GetReadyScreen
 import 'get_ready_screen.dart';  
 
-class HomeScreen extends StatelessWidget {
+// dynamic data handling
+class HomeScreen extends StatefulWidget { 
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // Variables for real-time streak data
+  int streakCount = 0; 
+  Set<String> workoutDays = {}; 
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserStreak(); // Fetch real data on load
+  }
+
+  // Streak calculation logic
+  Future<void> _fetchUserStreak() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+
+      // Fetching all workout dates for this user from the supabase table
+      final List<dynamic> data = await Supabase.instance.client
+          .from('workout_sessions')
+          .select('created_at')
+          .eq('user_id', user.id);
+
+      // Converting timestamps to unique YYYY-MM-DD dates with proper 0-padding
+      final processedDays = data.map((d) {
+        DateTime date = DateTime.parse(d['created_at']).toLocal();
+        return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+      }).toSet();
+
+      // consecutive days calculation logic
+      int count = 0;
+      DateTime today = DateTime.now();
+      String todayStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+
+      // If worked out today, start from today. Otherwise, check if yesterday was part of a streak.
+      DateTime checkDate = processedDays.contains(todayStr) ? today : today.subtract(const Duration(days: 1));
+      
+      while (processedDays.contains("${checkDate.year}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}")) {
+        count++;
+        checkDate = checkDate.subtract(const Duration(days: 1));
+      }
+
+      if (mounted) {
+        setState(() {
+          streakCount = count;
+          workoutDays = processedDays; // highlights circles for streak 
+        });
+      }
+    } catch (e) {
+      debugPrint("Error calculating streak: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +72,10 @@ class HomeScreen extends StatelessWidget {
 
     // Get the username
     final String userName = user?.userMetadata?['full_name'] ?? "User";
+
+    // Date display logic for the weekly circles
+    final List<String> weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final DateTime now = DateTime.now();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -25,52 +87,130 @@ class HomeScreen extends StatelessWidget {
           IconButton(onPressed: () {}, icon: const Icon(Icons.person_outline, color: AppColors.primary))
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // User progress 
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceGrey,
-                borderRadius: BorderRadius.circular(20),
+      body: RefreshIndicator( // pull-to-refresh for streak update
+        onRefresh: _fetchUserStreak,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(), 
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // User progress 
+              // Dynamic Streak Counter
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceGrey,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Row(
+                  children: [
+                    // Flame / Streak Count
+                    Column(
+                      children: [
+                        Icon(
+                          Icons.local_fire_department_rounded, 
+                          color: streakCount > 0 ? Colors.orangeAccent : Colors.grey, 
+                          size: 45
+                        ),
+                        Text(
+                          "$streakCount", 
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 25),
+                    
+                    // Weekly Calendar View
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Your streak", 
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)
+                          ),
+                          const SizedBox(height: 15),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: List.generate(7, (index) {
+                              // Find the date for each circle in the current week (starting Monday)
+                              DateTime dayDate = now.subtract(Duration(days: now.weekday - 1 - index));
+                              String dateKey = "${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}";
+                              
+                              bool isToday = dayDate.day == now.day && dayDate.month == now.month;
+                              bool hasWorkout = workoutDays.contains(dateKey); // NEW: Checks if this specific day has data
+
+                              return Column(
+                                children: [
+                                  // Date Circle
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isToday ? AppColors.primary : (hasWorkout ? AppColors.primary.withValues(alpha: 0.5) : Colors.white24),
+                                        width: 1.5
+                                      ),
+                                      // FIXED: Circle turns blue if a workout exists for that day
+                                      color: hasWorkout ? AppColors.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "${dayDate.day}",
+                                        style: TextStyle(
+                                          color: hasWorkout || isToday ? Colors.white : Colors.white38,
+                                          fontSize: 12,
+                                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Day Label
+                                  Text(
+                                    weekDays[index],
+                                    style: TextStyle(
+                                      color: isToday ? Colors.white : AppColors.textGrey,
+                                      fontSize: 11,
+                                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
+              
+              const SizedBox(height: 30),
+              const Text("Choose your workout for today", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+
+              // Workout Grid
+              GridView.count(
+                shrinkWrap: true, 
+                physics: const NeverScrollableScrollPhysics(), 
+                crossAxisCount: 2, // 2 exercise per row
+                crossAxisSpacing: 15,
+                mainAxisSpacing: 15,
                 children: [
-                  const Text("Today's Progress", style: TextStyle(color: AppColors.textGrey)),
-                  const SizedBox(height: 10),
-                  const Text("125 Reps", style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                  const SizedBox(height: 5),
-                  const Text("Target: 200 Reps", style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
+                  // adding Icons images to the exercise cards
+                  _workoutCard(context, "Squats", "assets/icons/Squats_icon.png"),
+                  _workoutCard(context, "Pushups", "assets/icons/PushUp_icon.png"),
+                  _workoutCard(context, "Lateral Raises", "assets/icons/LateralRaises_icon.png"),
+                  _workoutCard(context, "Bicep Curls", "assets/icons/BicepsCurls_icon.png"),
                 ],
               ),
-            ),
-            
-            const SizedBox(height: 30),
-            const Text("Choose your workout for today", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-
-            // Workout Grid
-            GridView.count(
-              shrinkWrap: true, 
-              physics: const NeverScrollableScrollPhysics(), 
-              crossAxisCount: 2, // 2 exercise per row
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              children: [
-                // adding Icons images to the exercise cards
-                _workoutCard(context, "Squats", "assets/icons/Squats_icon.png"),
-                _workoutCard(context, "Pushups", "assets/icons/PushUp_icon.png"),
-                _workoutCard(context, "Lateral Raises", "assets/icons/LateralRaises_icon.png"),
-                _workoutCard(context, "Bicep Curls", "assets/icons/BicepsCurls_icon.png"),
-              ],
-            ),
-            const SizedBox(height: 30),
-            // Video Tutorial guide has been moved to the individual GetReadyScreen for each exercise.
-          ],
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
     );
@@ -81,7 +221,6 @@ class HomeScreen extends StatelessWidget {
   Widget _workoutCard(BuildContext context, String title, String imagePath) {
     return GestureDetector(
       onTap: () {
-        // Navigation layout
         Navigator.push(
           context,
           MaterialPageRoute(

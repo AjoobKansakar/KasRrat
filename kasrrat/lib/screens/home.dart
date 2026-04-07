@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; 
 import '../core/kasrrat_colors.dart';
 // Navigation from exercise card to GetReadyScreen
-import 'get_ready_screen.dart';  
+import 'get_ready_screen.dart'; 
+// Edit profile screen import
+import 'edit_profile_screen.dart'; 
 
 // dynamic data handling
 class HomeScreen extends StatefulWidget { 
@@ -84,7 +86,16 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         title: Text("Hello, $userName!", style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.person_outline, color: AppColors.primary))
+          // navigates to EditProfileScreen when clicked
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+              );
+            }, 
+            icon: const Icon(Icons.person_outline, color: AppColors.primary)
+          )
         ],
       ),
       body: RefreshIndicator( // pull-to-refresh for streak update

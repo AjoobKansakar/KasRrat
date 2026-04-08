@@ -18,11 +18,15 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
   // Rep range List
   int? _selectedReps;
   final List<int> _repOptions = [5, 8, 10, 12, 15, 20];
+  
+  // Track the current video index for the slider
+  int _currentVideoIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     // Dynamic Data selection to fetch correct manula for active exercise
     final manualData = _getExerciseManual(widget.exerciseName);
+    final List<String> videoPaths = manualData['videos'] as List<String>;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -129,11 +133,48 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
             // video guide section
             _buildSectionHeader("Form Demonstration:"),
             const SizedBox(height: 10),
-            // This displays the video specific to the exercise
+            // slider for Tutorial and Demonstration videos
             Center(
-              child: VideoGuideCard(
-                title: "${widget.exerciseName} Tutorial", 
-                videoPath: manualData['video']!,
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 310, // fixed SizeBox
+                    child: PageView.builder(
+                      itemCount: videoPaths.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentVideoIndex = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final String type = index == 0 ? "Tutorial" : "Demonstration";
+                        return VideoGuideCard(
+                          title: "${widget.exerciseName} $type", 
+                          videoPath: videoPaths[index],
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Slider indicators
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      videoPaths.length,
+                      (index) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _currentVideoIndex == index 
+                              ? AppColors.primary 
+                              : Colors.white24,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -252,7 +293,10 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
       // For Squats
       case 'squats':
         return {
-          'video': "assets/videos/Squats_video.mp4",
+          'videos': [
+            "assets/videos/Squats_tutorial.mp4",
+            "assets/videos/PushUp_demo.mp4"
+          ],
           'manual':
               "Stand with feet shoulder-width apart. Keep your back straight. Slowly bend your knees and hips, go down maintaining straight back, keeping your weight balanced on both legs. Stand back up to the starting position keeping you back straight throughout the movement.",
           'rules': [
@@ -263,12 +307,16 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
             "Knee angle must go below 100° for a proper rep count",
             "Must return to fully standing position",
             "No switching into a lunge position",
+            "View the exercise tutorial and demonstration below before you start your set",
           ],
         };
       // For pushups
       case 'pushups':
         return {
-          'video': "assets/videos/Pushup_video2.mp4",
+          'videos': [
+            "assets/videos/PushUp_tutorial.mp4",
+            "assets/videos/PushUp_demo.mp4"
+          ],
           'manual':
               "Start in a high plank position. Place your hand under your shoulders. Keep your body in a straight line. Lower your body until your chest nearly touches the floor bending your elbows, keeping your elbows at a 45° angle. Go down until elbows are around 90°. Push back up until arms are straight again.",
           'rules': [
@@ -278,12 +326,16 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
             "Maintain a straight line between Shoulder-Hip-Ankle",
             "Elbows must bend below 90° for a full rep",
             "Must return to full extension (>160°)",
+            "View the exercise tutorial and demonstration below before you start your set",
           ],
         };
       // for biceps curls
       case 'bicep curls':
         return {
-          'video': "assets/videos/BicepsCurls_video.mp4",
+          'videos': [
+            "assets/videos/BicepCurls_tutorial.mp4",
+            "assets/videos/PushUp_demo.mp4"
+          ],
           'manual':
               "Stand tall with arms at your sides. Keeping your elbows pinned to your ribs, start with arms fully extended then curl both the arms upwards toward your shoulders. Keep in mind not to move your elbows during the movement keep them in a fix position. Slowly lower your arms back to the start position.",
           'rules': [
@@ -293,12 +345,16 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
             "Both arms must curl together",
             "Arms must return to >150° at the down position",
             "Elbows must stay stable no elbow swinging is allowed",
+            "View the exercise tutorial and demonstration below before you start your set",
           ],
         };
       // for lateral raises 
       case 'lateral raises':
         return {
-          'video': "assets/videos/LateralRaises_video.mp4",
+          'videos': [
+            "assets/videos/LateralRaise_tutorial.mp4",
+            "assets/videos/PushUp_demo.mp4"
+          ],
           'manual':
               "Hold weights at your sides of your hips, with a slight bend in elbows. Lift both arms outwards to your sides until they are parallel to the floor, until arms reach shoulder height. Lower them back down. control the weight throughout the movement",
           'rules': [
@@ -308,11 +364,12 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
             "Shoulder angle must reach around 90° in top position",
             "Both the arms must reach shoulder height",
             "Must return to <30° in down position",
+            "View the exercise tutorial and demonstration below before you start your set",
           ],
         };
       default:
         return {
-          'video': "assets/videos/Squats_video.mp4",
+          'videos': ["assets/videos/PushUp_demo.mp4", "assets/videos/PushUp_demo.mp4"],
           'manual': "Align yourself and follow instructions.",
           'rules': ["Full body in frame"],
         };

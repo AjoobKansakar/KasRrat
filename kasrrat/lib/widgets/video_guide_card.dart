@@ -43,15 +43,21 @@ class _VideoGuideCardState extends State<VideoGuideCard> {
         ClipRRect(
           borderRadius: BorderRadius.circular(15),
           child: Container(
-            width: 250,
-            height: 150,
+            width: double.infinity, // taking available width
+            constraints: const BoxConstraints(maxHeight: 250), // Set a maximum height
             color: AppColors.surfaceGrey,
             child: _controller.value.isInitialized
-                ? GestureDetector(
-                    onTap: () {
-                      _controller.value.isPlaying ? _controller.pause() : _controller.play();
-                    },
-                    child: VideoPlayer(_controller),
+                ? Center(
+                    child: AspectRatio(
+                      // to pull the width/height ratio form the video
+                      aspectRatio: _controller.value.aspectRatio,
+                      child: GestureDetector(
+                        onTap: () {
+                          _controller.value.isPlaying ? _controller.pause() : _controller.play();
+                        },
+                        child: VideoPlayer(_controller),
+                      ),
+                    ),
                   )
                 : const Center(child: CircularProgressIndicator()),
           ),

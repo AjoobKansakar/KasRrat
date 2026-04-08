@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/kasrrat_colors.dart';
 import '../widgets/custom_text_field.dart';
+// Imports for navigation
+import 'home.dart';
+import 'dashboard_screen.dart';
+// routing import 
+import '../routes/app_routes.dart'; 
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -21,7 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _loadUserData();
   }
 
-  // Fetch current data to show in text fields
+  // Fetching current User data to display
   void _loadUserData() {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
@@ -65,7 +70,51 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  // delete account Logic
+  // Logout confirmation logic
+  // Logout pop-up message for confirmation
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceGrey,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: AppColors.primary, width: 1)),
+        title: const Text("Are you sure you want to Log out?", 
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context), // Closes the dialog
+                  child: const Text("No", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const VerticalDivider(color: Colors.white24),
+              Expanded(
+                child: TextButton(
+                onPressed: () async {
+                  // Logic to sign out and navigate
+                  await Supabase.instance.client.auth.signOut();
+                  
+                  // Check if the context is still active after the async gap
+                  if (!context.mounted) return;
+
+                  // login page navigation when user logs out
+                  Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
+                },
+                  child: const Text("Yes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  // Delete account Logic
+  // delete pop up message for confirmation
   void _showDeleteDialog() {
     showDialog(
       context: context,
@@ -93,10 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onPressed: () async {
                   // Logic to sign out and navigate
                   await Supabase.instance.client.auth.signOut();
-                  
-                  // Check if the context is still active after the async gap
                   if (!context.mounted) return;
-
                   Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                 },
                   child: const Text("Yes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -116,16 +162,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text("Edit Profile", style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
+        automaticallyImplyLeading: false, 
+        title: const Text("Edit Profile", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28)),
         actions: [
           TextButton(
             onPressed: _showDeleteDialog,
-            child: const Text("Delete", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            child: const Text("Delete Account", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.normal, fontSize: 12)),
           )
         ],
       ),
@@ -159,9 +201,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
 
-            const SizedBox(height: 100),
+            const SizedBox(height: 40),
 
-            // Update Button
+            // Update pfp button
             SizedBox(
               width: double.infinity,
               height: 60,
@@ -176,8 +218,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   : const Text("Update Profile", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
               ),
             ),
+
+            const SizedBox(height: 15),
+
+            // Logout Button
+            SizedBox(
+              width: double.infinity,
+              height: 60,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.red, //red button
+                  side: const BorderSide(color: Colors.redAccent, width: 2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
+                onPressed: _showLogoutDialog,
+                child: const Text("LOG OUT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+              ),
+            ),   
           ],
         ),
+      ),
+      // Footer logic
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: AppColors.surfaceGrey,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textGrey,
+        currentIndex: 2, // Highlight Profile
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Dashboard'),
+          BottomNavigationBarItem(icon: Icon(Icons.fitness_center_rounded), label: 'Exercise'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
+        ],
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const DashboardScreen()));
+          } else if (index == 1) {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+          }
+        },
       ),
     );
   }

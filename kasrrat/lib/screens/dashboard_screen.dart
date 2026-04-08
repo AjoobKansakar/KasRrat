@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/kasrrat_colors.dart';
+// imports for footer
+import 'home.dart';
+import 'edit_profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -55,13 +58,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }).toSet();
 
         int count = 0;
-        DateTime checkDate = DateTime.now();
+        DateTime today = DateTime.now();
         String todayStr =
-            "${checkDate.year}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}";
+            "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
 
         DateTime streakCheck = workoutDays.contains(todayStr)
-            ? checkDate
-            : checkDate.subtract(const Duration(days: 1));
+            ? today
+            : today.subtract(const Duration(days: 1));
         while (workoutDays.contains(
           "${streakCheck.year}-${streakCheck.month.toString().padLeft(2, '0')}-${streakCheck.day.toString().padLeft(2, '0')}",
         )) {
@@ -100,10 +103,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text(
           "Performance Dashboard",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+            ),
         ),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false, 
       ),
       body: _isLoading
           ? const Center(
@@ -144,7 +152,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             const Text(
-                              "Keep up the momentum!",
+                              "Lets go! Your doing great keep it up!",
                               style: TextStyle(
                                 color: AppColors.textGrey,
                                 fontSize: 13,
@@ -190,7 +198,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.star_rounded,
+                          Icons.military_tech,
                           color: Colors.amber,
                           size: 40,
                         ),
@@ -207,7 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             const Text(
-                              "Your top exercise",
+                              "Your most practiced exercise",
                               style: TextStyle(color: AppColors.textGrey),
                             ),
                           ],
@@ -218,7 +226,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   const SizedBox(height: 30),
                   // Weekly goal Stats card
-                  _buildSectionHeader("Weekly Goal"),
+                  _buildSectionHeader("Weekly Goal: 100 Reps"),
                   const SizedBox(height: 10),
                   LinearProgressIndicator(
                     // progress report calculation
@@ -237,8 +245,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
+      // Footer Logic
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: AppColors.surfaceGrey,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textGrey,
+        currentIndex: 0, // 0 index for Dashboard page
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.grid_view_rounded),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.fitness_center_rounded),
+            label: 'Exercise',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
+        ],
+        onTap: (index) {
+          if (index == 1) {
+            // Navigate back to Home page
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          } else if (index == 2) {
+            // Navigate to Edit Profile
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+            );
+          }
+        },
+      ),
     );
   }
+
   // Reuable stat card widget
   Widget _buildStatCard(String label, String value, IconData icon) {
     return Expanded(

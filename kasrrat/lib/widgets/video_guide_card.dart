@@ -43,7 +43,7 @@ class _VideoGuideCardState extends State<VideoGuideCard> {
         ClipRRect(
           borderRadius: BorderRadius.circular(15),
           child: Container(
-            width: double.infinity, // taking available width
+            width: double.infinity, // taking available width 
             constraints: const BoxConstraints(maxHeight: 250), // Set a maximum height
             color: AppColors.surfaceGrey,
             child: _controller.value.isInitialized

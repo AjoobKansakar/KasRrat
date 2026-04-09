@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/kasrrat_colors.dart';
 import '../widgets/custom_text_field.dart';
-import '../widgets/social_button.dart'; 
 import '../routes/app_routes.dart';
-// supabase 
+// supabase conection import
 import 'package:supabase_flutter/supabase_flutter.dart'; 
 
 class LoginScreen extends StatefulWidget { 
@@ -48,6 +47,32 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false); // Stop loading
+    }
+  }
+
+  // forgot password logic
+Future<void> _handleForgotPassword() async {
+  final email = _emailController.text.trim();
+  if (email.isEmpty) { /* show snackbar */ return; }
+
+  try {
+    await Supabase.instance.client.auth.resetPasswordForEmail(
+      email,
+      // URL callback from Supabase
+      redirectTo: 'io.supabase.kasrrat://login-callback/',
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Reset Password link has been sent! Check your email.")),
+      );
+    }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -131,7 +156,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Text("Forgot Password?", style: TextStyle(color: AppColors.primary)),
+                  child: GestureDetector(
+                    onTap: _handleForgotPassword, // reset password link logic
+                    child: Text(
+                      "Forgot Password?", 
+                      style: TextStyle(color: AppColors.primary),
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: 40),
@@ -151,27 +182,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       : const Text("Sign in", 
                           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
                   ),
-                ),
-
-                const SizedBox(height: 30),
-
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: AppColors.fieldBorder)),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text("OR", style: TextStyle(color: AppColors.textGrey)),
-                    ),
-                    Expanded(child: Divider(color: AppColors.fieldBorder)),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                // Social Buttons
-                const SizedBox(
-                  width: double.infinity,
-                  child: SocialButton(text: "Continue with Google"),
                 ),
 
                 const SizedBox(height: 30),

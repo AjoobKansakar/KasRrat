@@ -59,7 +59,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   // reset password logic
   Future<void> _handlePasswordReset() async {
     try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(_emailController.text.trim());
+      // redirectTo parameter for Deep Linking
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        _emailController.text.trim(),
+        redirectTo: 'io.supabase.kasrrat://login-callback/',
+      );
+      
+      // Safety check for async gap
+      if (!mounted) return;
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Password reset link sent to your email!")),

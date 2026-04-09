@@ -19,8 +19,93 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
   int? _selectedReps;
   final List<int> _repOptions = [5, 8, 10, 12, 15, 20];
   
-  // Track the current video index for the slider
+  // Track the current video index for video slider
   int _currentVideoIndex = 0;
+
+  // Camera Access Permission logic
+  void _showCameraPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // User must choose an option
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceGrey,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(
+          '“KasRrat” Would Like to Access the Camera',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'KasRrat uses the camera to analyze your exercise form',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        actionsPadding: EdgeInsets.zero,
+        actions: [
+          Column(
+            children: [
+              const Divider(color: Colors.white24, height: 1),
+              IntrinsicHeight(
+                child: Row(
+                  children: [
+                    // navigate to home page if camera access is not granted
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close dialog
+                          Navigator.pop(context); // Navigate back to Home page
+                        },
+                        child: const Text(
+                          "Don’t Allow",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const VerticalDivider(color: Colors.white24, width: 1),
+                    // navigate to workout screen if camera access is granted
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close dialog
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WorkoutSessionScreen(
+                                exerciseName: widget.exerciseName,
+                                targetReps: _selectedReps!,
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          "Allow",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -242,19 +327,10 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
+                // shows the camera acess permission pop-up when start set is clicked
                 onPressed: _selectedReps == null
                     ? null
-                    : () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => WorkoutSessionScreen(
-                              exerciseName: widget.exerciseName,
-                              targetReps: _selectedReps!,
-                            ),
-                          ),
-                        );
-                      },
+                    : _showCameraPermissionDialog,
                 child: const Text(
                   "Start Set",
                   style: TextStyle(
@@ -295,7 +371,7 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
         return {
           'videos': [
             "assets/videos/Squats_tutorial.mp4",
-            "assets/videos/PushUp_demo.mp4"
+            "assets/videos/Squats_demo.mp4"
           ],
           'manual':
               "Stand with feet shoulder-width apart. Keep your back straight. Slowly bend your knees and hips, go down maintaining straight back, keeping your weight balanced on both legs. Stand back up to the starting position keeping you back straight throughout the movement.",
@@ -334,7 +410,7 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
         return {
           'videos': [
             "assets/videos/BicepCurls_tutorial.mp4",
-            "assets/videos/PushUp_demo.mp4"
+            "assets/videos/BicepCurls_demo.mp4"
           ],
           'manual':
               "Stand tall with arms at your sides. Keeping your elbows pinned to your ribs, start with arms fully extended then curl both the arms upwards toward your shoulders. Keep in mind not to move your elbows during the movement keep them in a fix position. Slowly lower your arms back to the start position.",
@@ -353,7 +429,7 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
         return {
           'videos': [
             "assets/videos/LateralRaise_tutorial.mp4",
-            "assets/videos/PushUp_demo.mp4"
+            "assets/videos/LateralRaises_demo.mp4"
           ],
           'manual':
               "Hold weights at your sides of your hips, with a slight bend in elbows. Lift both arms outwards to your sides until they are parallel to the floor, until arms reach shoulder height. Lower them back down. control the weight throughout the movement",
@@ -369,7 +445,7 @@ class _GetReadyScreenState extends State<GetReadyScreen> {
         };
       default:
         return {
-          'videos': ["assets/videos/PushUp_demo.mp4", "assets/videos/PushUp_demo.mp4"],
+          'videos': ["assets/videos/Squats_tutorial.mp4", "assets/videos/Squats_demo.mp4"],
           'manual': "Align yourself and follow instructions.",
           'rules': ["Full body in frame"],
         };

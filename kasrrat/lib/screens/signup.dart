@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-// SupaBase import
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/kasrrat_colors.dart';
 import '../widgets/custom_text_field.dart';
-import '../widgets/social_button.dart';
 import '../routes/app_routes.dart'; 
+// SupaBase connection import
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignUpScreen extends StatefulWidget { 
   const SignUpScreen({super.key});
@@ -142,16 +141,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 CustomTextField(hint: "Password:", isPassword: true, controller: _passwordController),
                 CustomTextField(hint: "Confirm password:", isPassword: true, controller: _confirmPasswordController),
 
-                const SizedBox(height: 15),
-
-                const Row(
-                  children: [
-                    Icon(Icons.check_box_outline_blank, color: AppColors.textGrey),
-                    SizedBox(width: 8),
-                    Text("Remember me", style: TextStyle(color: AppColors.textGrey)),
-                  ],
-                ),
-
                 const SizedBox(height: 30),
 
                 // Sign up button
@@ -189,15 +178,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ],
               ),
-
-              const SizedBox(height: 30),
-
-              // Social Button
-              const SizedBox(
-                width: double.infinity,
-                child: SocialButton(text: "Continue with Google"),
-              ),
-
               const SizedBox(height: 40),
               ],
             ),

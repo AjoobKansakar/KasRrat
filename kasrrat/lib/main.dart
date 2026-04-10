@@ -64,8 +64,8 @@ class _KasRratAppState extends State<KasRratApp> {
       title: 'KasRrat',
       theme: ThemeData.dark(),
 
-      // show the login screen first
-      initialRoute: AppRoutes.login,
+      // Show splash screen as default routing
+      initialRoute: AppRoutes.splash,
 
       // maping for navigation
       routes: AppRoutes.getRoutes(),

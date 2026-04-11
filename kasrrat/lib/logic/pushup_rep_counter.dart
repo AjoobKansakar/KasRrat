@@ -41,6 +41,18 @@ class PushupCounter {
       return;
     }
 
+    // Horizontal Orientation Check
+    // Comparing X distance (length) to Y distance (height) between shoulder and ankle
+    double bodyLengthX = (leftShoulder.x - leftAnkle.x).abs();
+    double bodyHeightY = (leftShoulder.y - leftAnkle.y).abs();
+
+    // If Height (Y) is greater than Length (X), the user is standing up.
+    if (bodyHeightY > bodyLengthX) {
+      feedback = "Lye down on the floor!";
+      hasFormError = true;
+      return; // Stop processing further logic if the user is standing
+    }
+
     // sideways oreintation check, to only let the user perform the movement with sideprofile view
     double shoulderWidth = (leftShoulder.x - rightShoulder.x).abs();
     double torsoHeight = (leftShoulder.y - leftHip.y).abs();

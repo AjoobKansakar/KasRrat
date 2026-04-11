@@ -37,16 +37,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   // update profile logic
   Future<void> _updateProfile() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    final newEmail = _emailController.text.trim();
+    final newName = _nameController.text.trim();
+
     setState(() => _isLoading = true);
     try {
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(
-          data: {'full_name': _nameController.text.trim()},
+          email: newEmail != user?.email ? newEmail : null,
+          data: {'full_name': newName},
         ),
       );
       if (mounted) {
+        // Checking if email was changed to show a specific message
+        String successMsg = "Profile Updated Successfully!";
+        if (newEmail != user?.email) {
+          successMsg = "Profile Updated! Check your new email to confirm the change.";
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profile Updated Successfully!")),
+          SnackBar(content: Text(successMsg)),
+        );
+      }
+    } on AuthException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message), backgroundColor: Colors.red),
         );
       }
     } catch (e) {

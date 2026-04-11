@@ -148,10 +148,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Expanded(
                 child: TextButton(
                 onPressed: () async {
-                  // Logic to sign out and navigate
-                  await Supabase.instance.client.auth.signOut();
-                  if (!context.mounted) return;
-                  Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                  try {
+                    // Calling the PostgreSQL function / Query to delete User account
+                    // deletes the user from auth.users permanently
+                    await Supabase.instance.client.rpc('delete_user_account');
+
+                    // clearing local session
+                    await Supabase.instance.client.auth.signOut();
+
+                    if (!context.mounted) return;
+
+                    // to navigate the user back to login screen
+                    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Account deleted successfully.")),
+                    );
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    Navigator.pop(context); // Close dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Error deleting account: $e"), backgroundColor: Colors.red),
+                    );
+                  }
                 },
                   child: const Text("Yes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),

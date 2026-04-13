@@ -118,7 +118,7 @@ class BicepCurlCounter {
           reps++;
           goodReps++;
           onRepCount(); // rep count audio feedback
-          feedback = "Good Rep!";
+          feedback = "Good Repp!";
           hasFormError = false;
         } else if (repHadError) {
           // If form was bad (elbow swinging), rep is not counted

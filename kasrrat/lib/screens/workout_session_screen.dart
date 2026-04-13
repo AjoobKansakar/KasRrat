@@ -224,20 +224,20 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       case 'pushups':
         _pushupCounter.processPose(
           pose,
-          onRepCount: () => _ttsService.speak("Good rep!"),
+          onRepCount: () => _ttsService.speak("Good repp!"),
           onFormError: () => _ttsService.speak("Error! Try again"),
         );
         break;
       case 'lateral raises':
         _lateralRaiseCounter.processPose(pose,
-          onRepCount: () => _ttsService.speak("Good rep!"),
+          onRepCount: () => _ttsService.speak("Good repp!"),
           onFormError: () => _ttsService.speak("Face the camera and raise your arms evenly"),
         );
         break;
       case 'bicep curls': 
         _bicepCurlCounter.processPose(
           pose,
-          onRepCount: () => _ttsService.speak("Good rep!"),
+          onRepCount: () => _ttsService.speak("Good repp!"),
           // Elbow swinging error
           onFormError: () => _ttsService.speak("Try again! Keep your elbows in a fixed position"),
           // Only one arm used error
@@ -247,7 +247,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       default:
         _squatCounter.processPose(
           pose,
-          onRepCount: () => _ttsService.speak("Good rep!"),
+          onRepCount: () => _ttsService.speak("Good repitition!"),
           onFormError: () => _ttsService.speak("Error! Try again"),
         );
     }

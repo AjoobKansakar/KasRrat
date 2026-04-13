@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/kasrrat_colors.dart';
-// imports for footer
+// footer import
 import 'home.dart';
 import 'edit_profile_screen.dart';
 
@@ -101,14 +101,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          "Performance Dashboard",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 28,
-            ),
-        ),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false, 
@@ -118,17 +110,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: CircularProgressIndicator(color: AppColors.primary),
             )
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Streak Card
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(30), 
                     decoration: BoxDecoration(
                       color: AppColors.surfaceGrey,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(25),
                     ),
                     child: Row(
                       children: [
@@ -137,35 +129,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           color: streakCount > 0
                               ? Colors.orangeAccent
                               : Colors.grey,
-                          size: 40,
+                          size: 60, 
                         ),
-                        const SizedBox(width: 15),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "$streakCount Day Streak",
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "$streakCount Day Streak",
+                                style: const TextStyle(
+                                  fontSize: 24, 
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                            const Text(
-                              "Lets go! Your doing great keep it up!",
-                              style: TextStyle(
-                                color: AppColors.textGrey,
-                                fontSize: 13,
+                              const SizedBox(height: 5),
+                              const Text(
+                                "Results happen over time, not overnight.",
+                                style: TextStyle(
+                                  color: AppColors.textGrey,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 25),
-                  // User Stats Card
+                  const SizedBox(height: 30),
+                  // User Stats Card 
                   Row(
                     children: [
                       _buildStatCard(
@@ -173,7 +168,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         totalReps.toString(),
                         Icons.fitness_center_rounded,
                       ),
-                      const SizedBox(width: 15),
+                      const SizedBox(width: 20),
                       _buildStatCard(
                         "Sessions",
                         totalSessions.toString(),
@@ -182,17 +177,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 25),
-                  // Most Practiced exercise card
+                  const SizedBox(height: 35),
+                  // Most Practiced exercise card 
                   _buildSectionHeader("Most Practiced"),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(30), 
                     decoration: BoxDecoration(
                       color: AppColors.surfaceGrey,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(25),
                       border: Border.all(
                         color: AppColors.primary.withValues(alpha: 0.3),
+                        width: 1.5,
                       ),
                     ),
                     child: Row(
@@ -200,23 +196,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const Icon(
                           Icons.military_tech,
                           color: Colors.amber,
-                          size: 40,
+                          size: 55,
                         ),
-                        const SizedBox(width: 15),
+                        const SizedBox(width: 20),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               favoriteExercise,
                               style: const TextStyle(
-                                fontSize: 20,
+                                fontSize: 26,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
                             ),
                             const Text(
-                              "Your most practiced exercise",
-                              style: TextStyle(color: AppColors.textGrey),
+                              "Your top movement",
+                              style: TextStyle(color: AppColors.textGrey, fontSize: 15),
                             ),
                           ],
                         ),
@@ -224,27 +220,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 30),
-                  // Weekly goal Stats card
+                  const SizedBox(height: 40),
+                  // Weekly goal Stats card 
                   _buildSectionHeader("Weekly Goal: 100 Reps"),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 15),
                   LinearProgressIndicator(
                     // progress report calculation
                     value: (totalReps / weeklyGoal).clamp(0.0, 1.0),
                     backgroundColor: AppColors.surfaceGrey,
                     color: AppColors.primary,
-                    minHeight: 12,
-                    borderRadius: BorderRadius.circular(10),
+                    minHeight: 18, 
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "${(totalReps / weeklyGoal * 100).toInt()}% of weekly goal completed",
-                    style: const TextStyle(color: AppColors.textGrey),
+                  const SizedBox(height: 15),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "${(totalReps / weeklyGoal * 100).toInt()}% completed",
+                        style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "$totalReps / $weeklyGoal",
+                        style: const TextStyle(color: AppColors.textGrey, fontSize: 16),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 50),
                 ],
               ),
             ),
+
       // Footer Logic
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: AppColors.surfaceGrey,
@@ -289,27 +295,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildStatCard(String label, String value, IconData icon) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 35), 
         decoration: BoxDecoration(
           color: AppColors.surfaceGrey,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(25),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: AppColors.primary, size: 28),
-            const SizedBox(height: 15),
+            Icon(icon, color: AppColors.primary, size: 35), 
+            const SizedBox(height: 20),
             Text(
               value,
               style: const TextStyle(
-                fontSize: 30,
+                fontSize: 42, 
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
               ),
             ),
             Text(
               label,
-              style: const TextStyle(color: AppColors.textGrey, fontSize: 14),
+              style: const TextStyle(color: AppColors.textGrey, fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -319,11 +325,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.only(bottom: 20),
       child: Text(
         title,
         style: const TextStyle(
-          fontSize: 18,
+          fontSize: 22, 
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),

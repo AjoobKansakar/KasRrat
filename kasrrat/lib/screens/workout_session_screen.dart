@@ -247,7 +247,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       default:
         _squatCounter.processPose(
           pose,
-          onRepCount: () => _ttsService.speak("Good repitition!"),
+          onRepCount: () => _ttsService.speak("Good repp!"),
           onFormError: () => _ttsService.speak("Error! Try again"),
         );
     }

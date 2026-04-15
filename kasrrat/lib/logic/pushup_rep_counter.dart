@@ -122,7 +122,7 @@ class PushupCounter {
           reps++;
           goodReps++;
           onRepCount(); // rep count audio feedback
-          feedback = "Good Repp!";
+          feedback = "Good Rep!";
           hasFormError = false;
         } else if (repHadError) {
           // If form was bad, rep is not counted

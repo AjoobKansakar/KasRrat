@@ -124,7 +124,7 @@ class SquatCounter {
           reps++;      
           goodReps++; 
           onRepCount(); // rep count feedback
-          feedback = "Good Job!";
+          feedback = "Good Rep!";
           hasFormError = false;
         } 
         else if (repHadError) {

@@ -89,7 +89,7 @@ class LateralRaiseCounter {
           reps++;
           goodReps++;
           onRepCount(); 
-          feedback = "Good Repp!";
+          feedback = "Good Rep!";
           hasFormError = false;
         } else if (repHadError) {
           onFormError(); 

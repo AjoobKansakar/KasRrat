@@ -80,7 +80,7 @@ class PushupCounter {
         ? leftBodyAngle
         : rightBodyAngle;
 
-    // UPDATED: More visible side elbow for more robust detection
+    // More visible side elbow for more robust detection
     double currentElbowAngle = leftElbow.likelihood > rightElbow.likelihood 
         ? leftElbowAngle 
         : rightElbowAngle;

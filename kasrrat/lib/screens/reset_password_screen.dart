@@ -21,7 +21,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    // 1. Validation
+    // Validation
     if (password.isEmpty || password.length < 6) {
       _showSnackBar("Password must be at least 6 characters.", Colors.orange);
       return;

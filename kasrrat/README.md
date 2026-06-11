@@ -1,4 +1,4 @@
-# KasRrat: AI-Powered Biomechanics Coach 🏋️‍♂️🤖
+# KasRrat: AI-Powered Biomechanics Coach
 
 KasRrat is a high-performance, privacy-centric mobile application designed to provide real-time biomechanical analysis and automated form correction for home fitness enthusiasts.
 

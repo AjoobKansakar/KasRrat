@@ -4,15 +4,19 @@ import 'routes/app_routes.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 // import for StreamSubscription/live connection
 import 'dart:async'; 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
   // Flutter cloud connection
   WidgetsFlutterBinding.ensureInitialized();
 
   // Supabase
+  // Load the environment variables
+  await dotenv.load(fileName: ".env");
+
   await Supabase.initialize(
-    url: 'https://qdoprrnffikvwlkdcccx.supabase.co',
-    anonKey: 'sb_publishable_Gn1H7BM8cABc85ajouVeOw_-F4gINdS',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   runApp(const KasRratApp());

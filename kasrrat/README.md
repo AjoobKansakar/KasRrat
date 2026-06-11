@@ -25,10 +25,6 @@ The application utilizes trigonometric calculations (specifically the **atan2** 
 - **Pushups:** Body-sag detection and horizontal orientation validation.
 - **Optimization:** Implemented Frame Throttling (processing every 3rd frame) to prevent thermal throttling on mobile hardware.
 
-## Screenshots & Demos
-
-_(Tip: Drag and drop your best screenshots/GIFs here)_
-
 ## Installation & Setup
 
 1. **Clone the repo:**
